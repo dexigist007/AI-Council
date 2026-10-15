@@ -41,6 +41,8 @@ export const routes: RouteRecordRaw[] = [
         component: pages[item.name]!,
         meta: { title: item.label },
       })),
+      { path: 'ideas/:id', component: () => import('@/pages/IdeaDetailPage.vue'), meta: { title: 'Fikir' } },
+      { path: 'council/:id', component: () => import('@/pages/CouncilSessionPage.vue'), meta: { title: 'Council oturumu' } },
     ],
   },
   { path: '/:pathMatch(.*)*', redirect: { name: 'dashboard' } },

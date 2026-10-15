@@ -27,6 +27,8 @@ export interface CouncilConfig {
   /** Hard cap in USD for the whole session. Unpriced models count as 0 and are reported. */
   budgetUsd?: number
   outputLanguage?: string
+  /** Workflow-specific details stored with the session config (e.g. task prompt versions). */
+  meta?: Record<string, unknown>
 }
 
 /** What a workflow (new idea, kill idea, audit...) plugs into the generic council. */

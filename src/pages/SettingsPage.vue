@@ -6,7 +6,7 @@
       arada sunucu yoktur.
     </div>
     <q-banner v-if="error" class="bg-negative text-white q-mb-md" rounded>{{ error }}</q-banner>
-    <div v-if="configs" class="column q-gutter-md" style="max-width: 900px">
+    <div v-if="configs" class="stack" style="max-width: 900px">
       <ProviderCard v-for="meta in PROVIDERS" :key="meta.id" :meta="meta" :initial="configs[meta.id]" />
       <ModelPricesCard />
     </div>

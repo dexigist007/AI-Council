@@ -86,6 +86,14 @@ export function ideasRepo(db: Db) {
       )
     },
 
+    /** Back to draft: after a failed/cancelled session, or reopening an idea from the graveyard. */
+    async setDraft(id: string): Promise<void> {
+      await db.execute(
+        "UPDATE ideas SET status = 'draft', reject_reason = NULL, revisit_condition = NULL, updated_at = ? WHERE id = ?",
+        [nowIso(), id],
+      )
+    },
+
     async markEvaluating(id: string): Promise<void> {
       await db.execute("UPDATE ideas SET status = 'evaluating', updated_at = ? WHERE id = ?", [nowIso(), id])
     },
