@@ -3,5 +3,5 @@
   "identifier": "default",
   "description": "Main window. Plugins (dialog, sql, fs) are added per phase with minimal scope.",
   "windows": ["main"],
-  "permissions": ["core:default"]
+  "permissions": ["core:default", "sql:default", "sql:allow-execute"]
 }

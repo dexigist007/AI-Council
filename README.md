@@ -12,4 +12,5 @@ npm install
 npm run tauri dev     # masaüstü uygulamasını geliştirme modunda açar
 npm run tauri build   # macOS: .app/.dmg, Windows: NSIS installer
 npm run typecheck
+npm test              # repository testleri (gerçek migration dosyalarıyla, in-memory SQLite)
 ```

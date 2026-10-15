@@ -5,6 +5,7 @@
     <q-banner v-if="phase" rounded class="q-mt-lg bg-grey-2 text-grey-8">
       Bu ekran {{ phase }} kapsamında gelecek.
     </q-banner>
+    <slot />
   </q-page>
 </template>
 
