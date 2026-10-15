@@ -51,7 +51,7 @@ export class GeminiProvider implements AIProvider {
         usage.output = (u.candidatesTokenCount ?? 0) + (u.thoughtsTokenCount ?? 0)
         usage.cached = u.cachedContentTokenCount ?? 0
       }
-    })
+    }, opts.signal)
     return { text, usage, finishReason }
   }
 

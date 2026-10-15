@@ -51,7 +51,7 @@ export class AnthropicProvider implements AIProvider {
       } else if (ev.type === 'error' && 'error' in ev) {
         throw new ProviderError(this.id, ev.error.type === 'overloaded_error' ? 'server' : 'bad_request', ev.error.message)
       }
-    })
+    }, opts.signal)
     if (finishReason === 'refusal') throw new ProviderError(this.id, 'bad_request', 'model declined the request (refusal)')
     return { text, usage, finishReason }
   }

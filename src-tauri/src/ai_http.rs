@@ -3,9 +3,12 @@
 
 use futures_util::StreamExt;
 use serde::{Deserialize, Serialize};
-use std::sync::OnceLock;
+use std::collections::HashMap;
+use std::sync::{Arc, Mutex, OnceLock};
 use std::time::Duration;
 use tauri::ipc::Channel;
+use tauri::State;
+use tokio::sync::Notify;
 
 use crate::providers::{self, Auth};
 
@@ -17,6 +20,35 @@ pub struct AiRequest {
     path: String,
     body: Option<serde_json::Value>,
     stream: bool,
+    /// Set by the caller when the request may be cancelled with `ai_cancel`.
+    request_id: Option<String>,
+}
+
+/// Pending cancellation signals, keyed by request id.
+#[derive(Default)]
+pub struct Cancels(Mutex<HashMap<String, Arc<Notify>>>);
+
+impl Cancels {
+    fn register(&self, id: &str) -> Arc<Notify> {
+        let notify = Arc::new(Notify::new());
+        self.0
+            .lock()
+            .unwrap()
+            .insert(id.to_string(), notify.clone());
+        notify
+    }
+
+    fn remove(&self, id: &str) {
+        self.0.lock().unwrap().remove(id);
+    }
+}
+
+#[tauri::command]
+pub fn ai_cancel(request_id: String, cancels: State<'_, Cancels>) {
+    if let Some(n) = cancels.0.lock().unwrap().get(&request_id) {
+        // notify_one stores a permit, so a cancel that races ahead of the request still lands.
+        n.notify_one();
+    }
 }
 
 #[derive(Serialize)]
@@ -49,7 +81,21 @@ fn client() -> &'static reqwest::Client {
 pub async fn ai_request(
     req: AiRequest,
     on_event: Channel<StreamEvent>,
+    cancels: State<'_, Cancels>,
 ) -> Result<AiResponse, String> {
+    let Some(id) = req.request_id.clone() else {
+        return perform(req, on_event).await;
+    };
+    let cancelled = cancels.register(&id);
+    let result = tokio::select! {
+        r = perform(req, on_event) => r,
+        _ = cancelled.notified() => Err("cancelled".to_string()),
+    };
+    cancels.remove(&id);
+    result
+}
+
+async fn perform(req: AiRequest, on_event: Channel<StreamEvent>) -> Result<AiResponse, String> {
     let provider =
         providers::lookup(&req.provider).ok_or(format!("unknown provider: {}", req.provider))?;
     let url = providers::build_url(&provider, &req.path)?;
@@ -193,9 +239,9 @@ mod live_tests {
             path: "/models".into(),
             body: None,
             stream: false,
+            request_id: None,
         };
-        let res =
-            tauri::async_runtime::block_on(ai_request(req, Channel::new(|_| Ok(())))).unwrap();
+        let res = tauri::async_runtime::block_on(perform(req, Channel::new(|_| Ok(())))).unwrap();
         crate::secrets::secret_delete("anthropic".into()).unwrap();
         assert_eq!(res.status, 401, "body: {:?}", res.body);
         assert!(!crate::secrets::secret_exists("anthropic".into()).unwrap());

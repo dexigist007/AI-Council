@@ -58,7 +58,7 @@ export class OpenAIChatProvider implements AIProvider {
         usage.output = ev.usage.completion_tokens ?? 0
         usage.cached = ev.usage.prompt_tokens_details?.cached_tokens ?? 0
       }
-    })
+    }, opts.signal)
     return { text, usage, finishReason }
   }
 

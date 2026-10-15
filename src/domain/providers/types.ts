@@ -32,6 +32,8 @@ export interface ChatResponse {
 
 export interface ChatOptions {
   onDelta?: (text: string) => void
+  /** Aborts the in-flight HTTP request; the promise rejects with CancelledError. */
+  signal?: AbortSignal
 }
 
 export interface ProviderCapabilities {
@@ -60,7 +62,18 @@ export interface TransportResponse {
   body: string | null
 }
 
-export type Transport = (req: TransportRequest, onData?: (data: string) => void) => Promise<TransportResponse>
+export type Transport = (
+  req: TransportRequest,
+  onData?: (data: string) => void,
+  signal?: AbortSignal,
+) => Promise<TransportResponse>
+
+export class CancelledError extends Error {
+  constructor() {
+    super('cancelled')
+    this.name = 'CancelledError'
+  }
+}
 
 export type ProviderErrorKind = 'auth' | 'rate_limit' | 'bad_request' | 'server' | 'parse'
 

@@ -16,7 +16,7 @@
       </q-list>
     </q-drawer>
 
-    <q-header bordered class="bg-transparent text-body1" :class="$q.dark.isActive ? 'text-white' : 'text-dark'">
+    <q-header bordered class="text-body1" :class="$q.dark.isActive ? 'bg-dark text-white' : 'bg-white text-dark'">
       <q-toolbar>
         <q-btn flat dense round icon="menu" @click="drawerOpen = !drawerOpen" />
         <q-toolbar-title>{{ route.meta.title }}</q-toolbar-title>

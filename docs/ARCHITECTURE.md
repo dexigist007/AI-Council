@@ -50,7 +50,11 @@ Orchestrator deterministik koddur (ADR-0002). Varsayılan akış (ADR-0003):
 4. **Revision** — yalnızca DEEP modda.
 5. **Judge** — tercihen konsey dışı model; ayrışmalar raporda korunur.
 
-Ayrışma yoksa Critique atlanır. Her çağrı öncesi bütçe kontrolü; aşımda durur, kullanıcıya sorar.
+BALANCED'da Critique her zaman çalışır: "ayrışma yok" kararını Critique'ten önce kodla güvenilir vermek
+mümkün değil. FAST'te hiç çalışmaz. Her round öncesi temkinli bir bütçe tahmini yapılır (beklenen tam cevap
+boyutuyla); limit aşılacaksa oturum o round başlamadan durur. Başarısız bir üye oturumu düşürmez, raporda
+listelenir; Judge başarısızsa oturum başarısız olur. Geçici hatalar bir kez tekrar denenir, geçersiz JSON
+bir kez onarılır; her deneme kayda geçer.
 
 | Mod | Model | Round |
 |---|---|---|

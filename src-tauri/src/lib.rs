@@ -43,12 +43,14 @@ pub fn run() {
                 .add_migrations(DB_URL, migrations())
                 .build(),
         )
+        .manage(ai_http::Cancels::default())
         .invoke_handler(tauri::generate_handler![
             app_info,
             secrets::secret_set,
             secrets::secret_delete,
             secrets::secret_exists,
-            ai_http::ai_request
+            ai_http::ai_request,
+            ai_http::ai_cancel
         ])
         .run(tauri::generate_context!())
         .expect("error while running AI Council");

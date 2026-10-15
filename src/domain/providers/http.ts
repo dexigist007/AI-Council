@@ -23,8 +23,9 @@ export async function send(
   transport: Transport,
   req: TransportRequest,
   onData?: (data: string) => void,
+  signal?: AbortSignal,
 ): Promise<string | null> {
-  const res = await transport(req, onData)
+  const res = await transport(req, onData, signal)
   if (res.status < 200 || res.status >= 300) {
     throw new ProviderError(req.provider, kindFor(res.status), errorMessage(res.body), res.status)
   }
