@@ -3,6 +3,7 @@ import { createTestDb } from './testing'
 import { ideasRepo } from './repositories/ideas'
 import { sessionsRepo } from './repositories/sessions'
 import { decisionsRepo } from './repositories/decisions'
+import { defaultProviderConfig, providerConfigsRepo } from './repositories/providerConfigs'
 
 describe('migrations', () => {
   it('apply cleanly and reject invalid enum values', async () => {
@@ -67,5 +68,16 @@ describe('decisions', () => {
     await decisions.approve(suggested.id)
     expect(await decisions.listApproved()).toHaveLength(2)
     expect(await decisions.listPending()).toHaveLength(0)
+  })
+})
+
+describe('provider configs', () => {
+  it('upserts and normalises blank models', async () => {
+    const repo = providerConfigsRepo(createTestDb())
+    await repo.save({ ...defaultProviderConfig('openai'), defaultModel: '  ' })
+    await repo.save({ ...defaultProviderConfig('openai'), enabled: true, defaultModel: ' m1 ', maxTokens: 8000 })
+    expect(await repo.list()).toEqual([
+      { provider: 'openai', enabled: true, defaultModel: 'm1', temperature: null, maxTokens: 8000 },
+    ])
   })
 })

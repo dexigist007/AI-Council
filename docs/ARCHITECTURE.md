@@ -23,6 +23,7 @@ Rust (ince katman)                      │
 ```
 
 Orkestrasyon tamamen TypeScript'te. API anahtarları WebView'a hiç girmez (ADR-0004).
+Sağlayıcı endpoint'leri Rust'ta sabittir (ADR-0006).
 
 ## 2. Provider abstraction
 

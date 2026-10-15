@@ -1,5 +1,9 @@
 // Native layer stays thin: secrets, ai_http, indexer, git and fs commands land here in later phases.
 
+mod ai_http;
+mod providers;
+mod secrets;
+
 use tauri_plugin_sql::{Migration, MigrationKind};
 
 /// Database file name, resolved by the sql plugin inside the app config directory.
@@ -39,7 +43,13 @@ pub fn run() {
                 .add_migrations(DB_URL, migrations())
                 .build(),
         )
-        .invoke_handler(tauri::generate_handler![app_info])
+        .invoke_handler(tauri::generate_handler![
+            app_info,
+            secrets::secret_set,
+            secrets::secret_delete,
+            secrets::secret_exists,
+            ai_http::ai_request
+        ])
         .run(tauri::generate_context!())
         .expect("error while running AI Council");
 }
