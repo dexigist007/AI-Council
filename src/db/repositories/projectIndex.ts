@@ -131,6 +131,15 @@ export function projectIndexRepo(db: Db) {
       return rows[0]?.n ?? 0
     },
 
+    /** Every chunk of a project, for local (non-AI) scans. */
+    async allChunks(projectId: string): Promise<ChunkWithPath[]> {
+      return db.select<ChunkWithPath>(
+        `SELECT c.id AS id, f.path AS path, c.start_line AS startLine, c.end_line AS endLine, c.content AS content, c.token_est AS tokenEst
+         FROM chunks c JOIN files f ON f.id = c.file_id WHERE c.project_id = ? ORDER BY f.path, c.start_line`,
+        [projectId],
+      )
+    },
+
     async getChunks(ids: string[]): Promise<ChunkWithPath[]> {
       if (ids.length === 0) return []
       const rows = await db.select<ChunkWithPath>(

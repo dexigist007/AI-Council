@@ -131,7 +131,17 @@ ayrı tutulmaz; ilgili tablolardan türetilir.
   bulunamazsa `unverified`.
 - AI impact / risk / urgency / effort girdilerini verir; P0–P3'ü deterministik formül hesaplar.
   Security + Critical → her zaman P0.
-- `fingerprint` ile aynı bulgu tekrar kaydedilmez.
+- `fingerprint` (kategori + ana dosya + başlığın anahtar kelimeleri) ile aynı bulgu tekrar kaydedilmez;
+  tekrar görülen bulgunun durumu korunur (yanlış alarm işaretlenen geri açılmaz).
+- Öncelik formülü (`domain/findings/priority.ts`): doğrulanmış kritik bulgu veya doğrulanmış yüksek
+  önemli güvenlik/gizli bilgi bulgusu → P0; diğerleri önem, etki, risk, aciliyet ve eforla puanlanır.
+  Kanıtı doğrulanamayan ya da "speculative" bulgular en fazla P2 olur.
+- Yerel tarama (AI yok): yorum olarak yazılmış TODO/FIXME, kaynak koddaki olası gizli bilgiler (yorumlar,
+  testler, dokümanlar ve yer tutucu değerler hariç; sadece bilinen anahtar biçimleri yüksek önem alır),
+  800+ satırlık dosyalar, test dosyası olmaması.
+- AI denetimi: her odak alanı için sabit bir anahtar kelime listesiyle yerel aramadan kaynak kod seçilir
+  (toplam ~16k token, dokümanlar ve testler hariç); Council (rol seti alana göre) bulguları üretir, kanıtlar
+  gönderilen metne karşı doğrulanır. Geliştirme fırsatları ayrı bir bulgu türü değil, raporun bir bölümüdür.
 
 ## 8. Güvenlik ve gizlilik
 

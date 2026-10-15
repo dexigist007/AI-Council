@@ -2,6 +2,16 @@
   <q-page padding>
     <div class="text-h5 q-mb-md">Dashboard</div>
     <q-banner v-if="error" class="bg-negative text-white q-mb-md" rounded>Veritabanı hatası: {{ error }}</q-banner>
+    <div class="row q-col-gutter-md q-mb-md" style="max-width: 1100px">
+      <div v-for="p in (['P0', 'P1', 'P2', 'P3'] as const)" :key="p" class="col-6 col-md-3">
+        <q-card flat bordered class="cursor-pointer" @click="$router.push('/findings')">
+          <q-card-section>
+            <div class="text-caption text-grey-7">Açık {{ p }} bulgu</div>
+            <div class="text-h5" :class="p === 'P0' && open.P0 ? 'text-negative' : ''">{{ open[p] }}</div>
+          </q-card-section>
+        </q-card>
+      </div>
+    </div>
     <div class="row q-col-gutter-md" style="max-width: 1100px">
       <div class="col-12 col-md-6">
         <q-card flat bordered class="full-height">
@@ -31,7 +41,7 @@
         </q-card>
       </div>
     </div>
-    <div class="text-caption text-grey-6 q-mt-lg">Projeler, bulgular ve Git değişiklikleri ilgili fazlarda buraya eklenecek.</div>
+    <div class="text-caption text-grey-6 q-mt-lg">Git değişiklikleri Faz 10'da buraya eklenecek.</div>
   </q-page>
 </template>
 
@@ -44,6 +54,7 @@ import { STATUS_COLOR, sessionLabel } from './sessionLabels'
 const ideas = ref<Idea[]>([])
 const sessions = ref<Session[]>([])
 const error = ref<string | null>(null)
+const open = ref({ P0: 0, P1: 0, P2: 0, P3: 0 })
 const waiting = computed(() => ideas.value.filter((i) => i.status === 'evaluating' || i.status === 'draft').slice(0, 8))
 const titles = computed(() => Object.fromEntries(ideas.value.map((i) => [i.id, i.title])))
 
@@ -52,6 +63,7 @@ onMounted(async () => {
     const r = await repos()
     ideas.value = await r.ideas.list()
     sessions.value = await r.sessions.list({ limit: 8 })
+    open.value = await r.findings.countOpenByPriority()
   } catch (e) {
     error.value = String(e)
   }

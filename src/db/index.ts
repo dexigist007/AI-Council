@@ -1,6 +1,7 @@
 import { getDb } from './client'
 import { decisionsRepo } from './repositories/decisions'
 import { ideasRepo } from './repositories/ideas'
+import { findingsRepo } from './repositories/findings'
 import { brainFactsRepo } from './repositories/brainFacts'
 import { projectIndexRepo } from './repositories/projectIndex'
 import { projectsRepo } from './repositories/projects'
@@ -11,7 +12,7 @@ import { sessionsRepo } from './repositories/sessions'
 export async function repos() {
   const db = await getDb()
   return { ideas: ideasRepo(db), sessions: sessionsRepo(db), decisions: decisionsRepo(db), providerConfigs: providerConfigsRepo(db), modelPrices: modelPricesRepo(db),
-    projects: projectsRepo(db), projectIndex: projectIndexRepo(db), brainFacts: brainFactsRepo(db) }
+    projects: projectsRepo(db), projectIndex: projectIndexRepo(db), brainFacts: brainFactsRepo(db), findings: findingsRepo(db) }
 }
 
 export type * from './repositories/ideas'
@@ -22,3 +23,4 @@ export type * from './repositories/modelPrices'
 export type * from './repositories/projects'
 export type * from './repositories/projectIndex'
 export type * from './repositories/brainFacts'
+export type * from './repositories/findings'

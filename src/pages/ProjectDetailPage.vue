@@ -22,6 +22,8 @@
         <q-tab name="overview" label="Overview" />
         <q-tab name="brain" label="Project Brain" />
         <q-tab name="ask" label="Ask Project" />
+        <q-tab name="audit" label="Audit" />
+        <q-tab name="findings" label="Findings" />
         <q-tab name="files" label="Files" />
         <q-tab v-for="t in LATER" :key="t.name" :name="t.name" :label="t.label" disable>
           <q-tooltip>{{ t.phase }}</q-tooltip>
@@ -39,6 +41,12 @@
         <q-tab-panel name="ask" class="q-pa-none">
           <ProjectAsk :project="project" />
         </q-tab-panel>
+        <q-tab-panel name="audit" class="q-pa-none">
+          <ProjectAudit :project="project" @show-findings="tab = 'findings'" @changed="findingsKey++" />
+        </q-tab-panel>
+        <q-tab-panel name="findings" class="q-pa-none">
+          <FindingsList :project-id="project.id" :refresh-key="findingsKey" />
+        </q-tab-panel>
         <q-tab-panel name="files" class="q-pa-none">
           <ProjectFiles :project-id="project.id" :refresh-key="refreshKey" />
         </q-tab-panel>
@@ -53,6 +61,8 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import FindingsList from '@/components/findings/FindingsList.vue'
+import ProjectAudit from '@/components/projects/ProjectAudit.vue'
 import ProjectAsk from '@/components/projects/ProjectAsk.vue'
 import ProjectBrain from '@/components/projects/ProjectBrain.vue'
 import ProjectFiles from '@/components/projects/ProjectFiles.vue'
@@ -64,8 +74,6 @@ import { indexerDeps } from '@/domain/indexing/runtime'
 import { projectsFs } from '@/platform/tauri'
 
 const LATER = [
-  { name: 'audit', label: 'Audit', phase: 'Faz 9' },
-  { name: 'findings', label: 'Findings', phase: 'Faz 9' },
   { name: 'git', label: 'Git Changes', phase: 'Faz 10' },
 ]
 const PHASE_LABEL: Record<IndexProgress['phase'], string> = {
@@ -82,6 +90,7 @@ const progress = ref<IndexProgress | null>(null)
 const indexError = ref<string | null>(null)
 const needsRepick = ref(false)
 const refreshKey = ref(0)
+const findingsKey = ref(0)
 
 async function load() {
   const r = await repos()
