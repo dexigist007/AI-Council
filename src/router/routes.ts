@@ -42,6 +42,7 @@ export const routes: RouteRecordRaw[] = [
         meta: { title: item.label },
       })),
       { path: 'ideas/:id', component: () => import('@/pages/IdeaDetailPage.vue'), meta: { title: 'Fikir' } },
+      { path: 'projects/:id', component: () => import('@/pages/ProjectDetailPage.vue'), meta: { title: 'Proje' } },
       { path: 'council/:id', component: () => import('@/pages/CouncilSessionPage.vue'), meta: { title: 'Council oturumu' } },
     ],
   },

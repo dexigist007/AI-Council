@@ -30,3 +30,26 @@ export const tauriTransport: Transport = async (
     signal?.removeEventListener('abort', cancel)
   }
 }
+
+export interface ScanEntry {
+  path: string
+  size: number
+  mtimeMs: number
+  skip: 'sensitive' | 'lockfile' | 'binary' | 'too_large' | null
+}
+
+export interface FileContent {
+  path: string
+  content: string | null
+  error: string | null
+}
+
+export const projectsFs = {
+  /** Native folder picker; registers the folder as readable. Null when cancelled. */
+  pickFolder: () => invoke<string | null>('project_pick_folder'),
+  forgetRoot: (root: string) => invoke<void>('project_forget_root', { root }),
+  defaultExcludes: () => invoke<string[]>('project_default_excludes'),
+  scan: (root: string, excludes: string[]) =>
+    invoke<{ entries: ScanEntry[]; truncated: boolean }>('project_scan', { root, excludes }),
+  readFiles: (root: string, paths: string[]) => invoke<FileContent[]>('project_read_files', { req: { root, paths } }),
+}

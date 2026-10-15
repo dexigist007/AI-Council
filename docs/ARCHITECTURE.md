@@ -100,6 +100,11 @@ model_prices(provider, model, in_per_mtok, out_per_mtok, cached_per_mtok)
 - Chunk: ~80–150 satır, mümkünse fonksiyon/sınıf sınırında (regex). Tree-sitter sonra.
 - Manifest'lerden dil/framework/dependency → OBSERVED.
 - Retrieval: FTS5 BM25 + path/symbol eşleşmesi; sonraki adım read-only tool'larla agentic retrieval.
+- FTS'te ayrıca tanımlayıcı parçaları tutulur (`loadPlaylist` → `load playlist`), böylece kelime parçasıyla
+  arama kod tanımlayıcılarını bulur.
+- Okunabilir klasörler: sadece kullanıcının native klasör diyaloğunda seçtiği kökler. İzin listesi Rust
+  tarafında `roots.json`'da tutulur; WebView genişletemez. Kök dışına (sembolik link dahil) çıkan yollar
+  reddedilir. `.env*`, anahtar ve sertifika dosyaları listelenir ama içerikleri hiç okunmaz.
 
 ## 6. Project Brain
 
