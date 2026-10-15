@@ -14,6 +14,7 @@
       </div>
 
       <IdeaReportView v-if="ideaReport" :report="ideaReport.judge" :council="ideaReport" />
+      <AskAnswerView v-if="askReport" :report="askReport" />
 
       <q-card flat bordered>
         <q-card-section class="text-subtitle2">Model çağrıları ({{ messages.length }})</q-card-section>
@@ -45,6 +46,8 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import IdeaReportView from '@/components/ideas/IdeaReportView.vue'
+import AskAnswerView from '@/components/projects/AskAnswerView.vue'
+import type { AskReport } from '@/domain/ask/ask'
 import { repos, type Session, type SessionMessage } from '@/db'
 import type { CouncilReport } from '@/domain/council/engine'
 import type { IdeaReport } from '@/domain/ideas/report'
@@ -56,6 +59,12 @@ const messages = ref<SessionMessage[]>([])
 const ideaReport = computed(() =>
   session.value?.finalReport && (session.value.type === 'new_idea' || session.value.type === 'kill_idea')
     ? (session.value.finalReport as CouncilReport<IdeaReport>)
+    : null,
+)
+
+const askReport = computed(() =>
+  session.value?.finalReport && (session.value.config.meta as { purpose?: string } | undefined)?.purpose === 'ask'
+    ? (session.value.finalReport as AskReport)
     : null,
 )
 

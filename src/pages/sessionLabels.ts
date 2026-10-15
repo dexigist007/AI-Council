@@ -15,5 +15,6 @@ export const STATUS_COLOR: Record<SessionStatus, string> = {
 /** Single-model project analyses share the ask_project type; their purpose is in the config. */
 export function sessionLabel(s: Pick<Session, 'type' | 'config'>): string {
   const purpose = (s.config.meta as { purpose?: string } | undefined)?.purpose
-  return purpose === 'brain_draft' ? 'Project Brain taslağı' : TYPE_LABEL[s.type]
+  if (purpose === 'brain_draft') return 'Project Brain taslağı'
+  return TYPE_LABEL[s.type]
 }

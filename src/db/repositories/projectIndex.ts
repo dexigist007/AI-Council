@@ -29,6 +29,15 @@ const mapFile = (r: FileRow): IndexedFile => ({
   id: r.id, path: r.path, lang: r.lang, kind: r.kind, size: r.size, mtimeMs: r.mtime_ms, hash: r.hash, skipReason: r.skip_reason,
 })
 
+export interface ChunkWithPath {
+  id: string
+  path: string
+  startLine: number
+  endLine: number
+  content: string
+  tokenEst: number
+}
+
 export interface SearchHit {
   chunkId: string
   path: string
@@ -120,6 +129,17 @@ export function projectIndexRepo(db: Db) {
     async countChunks(projectId: string): Promise<number> {
       const rows = await db.select<{ n: number }>('SELECT COUNT(*) AS n FROM chunks WHERE project_id = ?', [projectId])
       return rows[0]?.n ?? 0
+    },
+
+    async getChunks(ids: string[]): Promise<ChunkWithPath[]> {
+      if (ids.length === 0) return []
+      const rows = await db.select<ChunkWithPath>(
+        `SELECT c.id AS id, f.path AS path, c.start_line AS startLine, c.end_line AS endLine, c.content AS content, c.token_est AS tokenEst
+         FROM chunks c JOIN files f ON f.id = c.file_id WHERE c.id IN (${ids.map(() => '?').join(',')})`,
+        ids,
+      )
+      const order = new Map(ids.map((id, i) => [id, i]))
+      return rows.sort((a, b) => order.get(a.id)! - order.get(b.id)!)
     },
 
     async search(projectId: string, text: string, limit = 20): Promise<SearchHit[]> {

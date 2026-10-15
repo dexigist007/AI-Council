@@ -39,10 +39,15 @@ const RULES: Rule[] = [
   {
     // password = "...", API_KEY: '...', clientSecret="..." (value of 6+ chars, not a placeholder or variable).
     kind: 'assignment',
-    pattern: /\b([A-Za-z0-9_.-]*(?:password|passwd|pwd|secret|token|api[_-]?key|apikey|access[_-]?key|private[_-]?key|client[_-]?secret|auth[_-]?key|credentials?)[A-Za-z0-9_.-]*)(["']?\s*[:=]\s*)(["']?)([^"'\s,;)}{]{6,})\3/gi,
+    // The secret word must end the name (access_token, clientSecret, DB_PASSWORD) and be singular,
+    // so max_tokens / tokenEst / secrets:: do not match; "::" is a path separator, not an assignment.
+    pattern: /\b([A-Za-z0-9_.-]*(?:password|passwd|pwd|secret|token|api[_-]?key|apikey|access[_-]?key|private[_-]?key|client[_-]?secret|auth[_-]?key|credential))(?![A-Za-z0-9_])(["']?\s*(?:=(?!=)|(?<!:):(?!:))\s*)(["']?)([^"'\s,;(){}]{6,})\3/gi,
     replace: (m, name, sep, quote, value) =>
       // Unquoted plain words are prose or config names ("secrets: keyring"), not credentials.
       (!quote && /^[A-Za-z]+$/.test(value)) ||
+      // Unquoted member access or identifiers are code (r.max_tokens, excluded.token, myToken), not values.
+      (!quote && /^[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*$/.test(value) && !/\d/.test(value)) ||
+      value.includes(MASK) || // already masked by a more specific rule
       /^(?:\$\{?|process\.env|os\.environ|env\(|getenv|import\.meta|<|\*{3,}|x{4,}|your[_-]|changeme|example|placeholder|true|false|null|undefined)/i.test(value)
         ? m
         : `${name}${sep}${quote}${MASK}${quote}`,

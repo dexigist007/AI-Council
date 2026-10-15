@@ -22,12 +22,14 @@ describe('redact', () => {
       'DATABASE_URL=postgres://admin:S3cr3tPass@db.example.com:5432/app',
       'password = "hunter2hunter2"',
       "clientSecret: 'q8w7e6r5t4y3'",
+      'DB_PASSWORD=Tr0ub4dor3x',
+      'access_token: abc123def456ghi',
     ].join('\n'))
     expect(r.text).toContain('[REDACTED PRIVATE KEY]')
     expect(r.text).toContain('postgres://admin:********@db.example.com')
     expect(r.text).toContain('password = "********"')
     expect(r.text).toContain("clientSecret: '********'")
-    expect(r.text).not.toMatch(/MIIEow|S3cr3tPass|hunter2|q8w7e6/)
+    expect(r.text).not.toMatch(/MIIEow|S3cr3tPass|hunter2|q8w7e6|Tr0ub4dor|abc123def/)
     expect(r.kinds).toEqual(expect.arrayContaining(['private_key', 'url_credentials', 'assignment']))
   })
 
@@ -40,6 +42,12 @@ describe('redact', () => {
       'function resetPassword(user) { return sendToken(user) }',
       'const hash = "0123456789abcdef0123456789abcdef"', // hex: low mixedness, not masked
       'secrets  : keyring (Keychain / Credential Manager)', // prose in docs
+      'let key = crate::secrets::read(&req.provider)?;',
+      'secrets::secret_set,',
+      'maxTokens: r.max_tokens,',
+      'temperature = excluded.temperature, max_tokens = excluded.max_tokens`,',
+      'const accessToken = session.accessToken',
+      'if (token == expectedToken) return',
     ].join('\n')
     expect(redact(code)).toEqual({ text: code, count: 0, kinds: [] })
   })
