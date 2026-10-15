@@ -57,16 +57,25 @@ export function auditRoles(focusIds: string[]): string[] {
   return [...new Set([...roles, 'code-auditor', 'critical-analyst'])]
 }
 
-/** Verifies the judge's evidence against what was actually sent, then stores findings. */
+export type EvidenceSources = Map<string, { text: string; firstLine: number }[]>
+
+export function sourcesFromExcerpts(sent: AskContext['sent']): EvidenceSources {
+  const sources: EvidenceSources = new Map()
+  for (const e of sent) sources.set(e.path, [...(sources.get(e.path) ?? []), { text: e.text, firstLine: e.startLine }])
+  return sources
+}
+
+/**
+ * Verifies the judge's evidence against exactly what the council was shown (code excerpts for an
+ * audit, diff hunks for a change review), then stores the findings.
+ */
 export async function saveAuditFindings(
   findings: ReturnType<typeof findingsRepo>,
   projectId: string,
   sessionId: string,
   report: CouncilReport<AuditReport>,
-  context: AskContext,
+  sources: EvidenceSources,
 ): Promise<UpsertResult & { unverified: number }> {
-  const sources = new Map<string, { text: string; firstLine: number }[]>()
-  for (const e of context.sent) sources.set(e.path, [...(sources.get(e.path) ?? []), { text: e.text, firstLine: e.startLine }])
   let unverified = 0
   const items: NewFinding[] = report.judge.findings.map((f) => {
     const evidence = verifyCitations(f.evidence, sources)

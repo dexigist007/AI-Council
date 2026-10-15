@@ -10,7 +10,7 @@ import { priceLookup } from '@/domain/cost/pricing'
 import { runCouncil } from '@/domain/council/engine'
 import { indexProject } from '@/domain/indexing/indexer'
 import type { AIProvider } from '@/domain/providers/types'
-import { auditContext, auditRoles, buildAuditTask, saveAuditFindings, selectAuditChunks } from './audit'
+import { auditContext, auditRoles, buildAuditTask, saveAuditFindings, selectAuditChunks, sourcesFromExcerpts } from './audit'
 import type { AuditReport } from './report'
 
 const files: Record<string, string> = {
@@ -75,7 +75,7 @@ describe('audit', () => {
     expect(run.status).toBe('completed')
 
     const repo = findingsRepo(s.db)
-    const saved = await saveAuditFindings(repo, s.project.id, run.sessionId, run.report!, ctx)
+    const saved = await saveAuditFindings(repo, s.project.id, run.sessionId, run.report!, sourcesFromExcerpts(ctx.sent))
     expect(saved).toEqual({ added: 3, updated: 0, unverified: 1 })
     const list = await repo.list({ projectId: s.project.id })
     expect(list.map((f) => `${f.priority}|${f.verification}|${f.title}`)).toEqual([

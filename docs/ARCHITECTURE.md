@@ -150,7 +150,11 @@ ayrı tutulmaz; ilgili tablolardan türetilir.
 - Redaction: bilinen anahtar desenleri + entropi; `.env*`, `*.pem`, `id_rsa` vb. varsayılan gönderilmez.
 - Prompt injection: kod içeriği veri olarak sınırlandırılır; modele yazma/komut/ağ aracı verilmez.
 - Proje bazlı provider allowlist (veri yargı alanı).
-- Git: shell yok, allowlist. fs scope: yalnızca kayıtlı proje kökleri.
+- Git: shell yok. Rust'ta sabit bir işlem listesi var (status, log, diff HEAD, show <hash>); tek kullanıcı
+  girdisi olan commit hash'i doğrulanır, sadece kayıtlı proje kökünde ve kilit almadan çalışır.
+  Review Changes sadece diff'i (5 satır bağlam) gönderir; kanıtlar hunk'ların yeni dosya tarafına karşı
+  doğrulanır, bulgular audit ile aynı Findings sistemine düşer. Takip edilmeyen dosyalar diff'te yoktur.
+- fs scope: yalnızca kayıtlı proje kökleri.
 
 ## 9. Maliyet
 

@@ -2,10 +2,10 @@ import { defineStore } from 'pinia'
 import { shallowRef } from 'vue'
 import { repos } from '@/db'
 import type { Round } from '@/db'
-import { runCouncil, type CouncilConfig, type CouncilReport } from '@/domain/council/engine'
+import { runCouncil, type CouncilConfig, type CouncilReport, type CouncilTask } from '@/domain/council/engine'
 import { councilDeps } from '@/domain/council/runtime'
-import type { AskContext } from '@/domain/ask/context'
-import { buildAuditTask, saveAuditFindings } from '@/domain/audit/audit'
+import { saveAuditFindings, type EvidenceSources } from '@/domain/audit/audit'
+import type { AuditReport } from '@/domain/audit/report'
 import type { IdeaReport } from '@/domain/ideas/report'
 import { buildIdeaTask, type IdeaMode } from '@/domain/ideas/task'
 import type { Idea, Project } from '@/db'
@@ -22,7 +22,7 @@ export interface ActiveRun {
   unpriced: string[]
   error?: string
   report?: CouncilReport<IdeaReport>
-  auditReport?: CouncilReport<unknown>
+  auditReport?: CouncilReport<AuditReport>
   auditSaved?: { added: number; updated: number; unverified: number }
 }
 
@@ -72,14 +72,23 @@ export const useCouncilRun = defineStore('councilRun', () => {
     }
   }
 
-  async function startAudit(project: Project, focusIds: string[], context: AskContext, config: CouncilConfig) {
+  /**
+   * Runs a council whose judge returns findings (audit, change review) and stores the verified
+   * findings for the project.
+   */
+  async function startProjectCouncil(
+    project: Project,
+    task: CouncilTask<AuditReport>,
+    config: CouncilConfig,
+    sources: EvidenceSources,
+    meta: Record<string, unknown>,
+  ) {
     if (active.value?.status === 'running') throw new Error('Başka bir Council oturumu zaten çalışıyor.')
-    const task = buildAuditTask(project, context, focusIds)
     const members = Object.fromEntries([...config.participants, config.judge].map((p) => [p.id, { status: 'waiting' as const }]))
     active.value = { ideaId: null, projectId: project.id, sessionId: null, status: 'running', round: null, members, spentUsd: 0, unpriced: [] }
     controller = new AbortController()
     try {
-      const run = await runCouncil(await councilDeps(), task, { ...config, meta: { focus: focusIds, sentFiles: context.files } }, {
+      const run = await runCouncil(await councilDeps(), task, { ...config, meta }, {
         signal: controller.signal,
         onEvent: (e) => {
           if (e.type === 'round') patch({ round: e.round })
@@ -87,9 +96,7 @@ export const useCouncilRun = defineStore('councilRun', () => {
           else patch({ members: { ...active.value!.members, [e.participantId]: { status: e.status, error: e.error } } })
         },
       })
-      const saved = run.report
-        ? await saveAuditFindings((await repos()).findings, project.id, run.sessionId, run.report as never, context)
-        : undefined
+      const saved = run.report ? await saveAuditFindings((await repos()).findings, project.id, run.sessionId, run.report, sources) : undefined
       patch({ sessionId: run.sessionId, status: run.status, error: run.error, auditReport: run.report, auditSaved: saved })
     } catch (e) {
       patch({ status: 'failed', error: e instanceof Error ? e.message : String(e) })
@@ -106,5 +113,5 @@ export const useCouncilRun = defineStore('councilRun', () => {
     if (active.value?.status !== 'running') active.value = null
   }
 
-  return { active, startIdea, startAudit, cancel, dismiss }
+  return { active, startIdea, startProjectCouncil, cancel, dismiss }
 })

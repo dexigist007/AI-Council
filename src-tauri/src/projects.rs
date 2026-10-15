@@ -85,7 +85,7 @@ fn save_roots(app: &AppHandle, list: &[PathBuf]) -> Result<(), String> {
 }
 
 /// Resolves `root` and checks it was picked by the user.
-fn allowed_root(roots: &Roots, root: &str) -> Result<PathBuf, String> {
+pub fn allowed_root(roots: &Roots, root: &str) -> Result<PathBuf, String> {
     let canonical = fs::canonicalize(root).map_err(|e| format!("cannot open {root}: {e}"))?;
     if roots.0.lock().unwrap().iter().any(|r| r == &canonical) {
         Ok(canonical)

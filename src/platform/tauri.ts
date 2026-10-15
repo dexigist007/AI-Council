@@ -53,3 +53,12 @@ export const projectsFs = {
     invoke<{ entries: ScanEntry[]; truncated: boolean }>('project_scan', { root, excludes }),
   readFiles: (root: string, paths: string[]) => invoke<FileContent[]>('project_read_files', { req: { root, paths } }),
 }
+
+export type GitOp =
+  | { op: 'status' }
+  | { op: 'log'; limit: number }
+  | { op: 'diffWorking'; context: number }
+  | { op: 'diffCommit'; hash: string; context: number }
+
+/** Read-only git; Rust only runs the fixed operations above inside a registered project root. */
+export const gitRun = (root: string, op: GitOp) => invoke<string>('git_run', { root, op })

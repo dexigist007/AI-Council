@@ -41,7 +41,15 @@
         </q-card>
       </div>
     </div>
-    <div class="text-caption text-grey-6 q-mt-lg">Git değişiklikleri Faz 10'da buraya eklenecek.</div>
+    <q-card v-if="gitRows.length" flat bordered class="q-mt-md" style="max-width: 1100px">
+      <q-card-section class="text-subtitle2">Projelerdeki Git durumu</q-card-section>
+      <q-list dense separator>
+        <q-item v-for="g in gitRows" :key="g.id" clickable :to="`/projects/${g.id}`">
+          <q-item-section>{{ g.name }}</q-item-section>
+          <q-item-section side class="text-caption">{{ g.text }}</q-item-section>
+        </q-item>
+      </q-list>
+    </q-card>
   </q-page>
 </template>
 
@@ -50,11 +58,14 @@ import { computed, onMounted, ref } from 'vue'
 import { repos, type Idea, type Session } from '@/db'
 import { STATUS_LABEL } from '@/domain/ideas/labels'
 import { STATUS_COLOR, sessionLabel } from './sessionLabels'
+import { parseStatus } from '@/domain/git/parse'
+import { gitRun } from '@/platform/tauri'
 
 const ideas = ref<Idea[]>([])
 const sessions = ref<Session[]>([])
 const error = ref<string | null>(null)
 const open = ref({ P0: 0, P1: 0, P2: 0, P3: 0 })
+const gitRows = ref<{ id: string; name: string; text: string }[]>([])
 const waiting = computed(() => ideas.value.filter((i) => i.status === 'evaluating' || i.status === 'draft').slice(0, 8))
 const titles = computed(() => Object.fromEntries(ideas.value.map((i) => [i.id, i.title])))
 
@@ -64,6 +75,17 @@ onMounted(async () => {
     ideas.value = await r.ideas.list()
     sessions.value = await r.sessions.list({ limit: 8 })
     open.value = await r.findings.countOpenByPriority()
+    // Local git status only; failures (no repo, folder not reachable) just hide the row.
+    const projects = await r.projects.list()
+    const rows = await Promise.all(projects.map(async (p) => {
+      try {
+        const s = parseStatus(await gitRun(p.rootPath, { op: 'status' }))
+        return { id: p.id, name: p.name, text: `${s.branch ?? 'detached'} · ${s.files.length ? `${s.files.length} commit edilmemiş dosya` : 'temiz'}` }
+      } catch {
+        return null
+      }
+    }))
+    gitRows.value = rows.filter((x) => x !== null)
   } catch (e) {
     error.value = String(e)
   }

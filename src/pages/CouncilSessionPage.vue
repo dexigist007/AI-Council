@@ -15,6 +15,16 @@
 
       <IdeaReportView v-if="ideaReport" :report="ideaReport.judge" :council="ideaReport" />
       <AskAnswerView v-if="askReport" :report="askReport" />
+      <q-card v-if="findingsReport" flat bordered>
+        <q-card-section>
+          <div class="text-subtitle2">Özet</div>
+          <div style="white-space: pre-wrap">{{ findingsReport.judge.summary }}</div>
+          <div class="text-caption text-grey-7 q-mt-sm">
+            Judge {{ findingsReport.judge.findings.length }} bulgu üretti; doğrulanmış hâlleri projenin Findings sekmesinde.
+            <router-link v-if="session.projectId" :to="`/projects/${session.projectId}`">projeye git</router-link>
+          </div>
+        </q-card-section>
+      </q-card>
 
       <q-card flat bordered>
         <q-card-section class="text-subtitle2">Model çağrıları ({{ messages.length }})</q-card-section>
@@ -48,6 +58,7 @@ import { useRoute } from 'vue-router'
 import IdeaReportView from '@/components/ideas/IdeaReportView.vue'
 import AskAnswerView from '@/components/projects/AskAnswerView.vue'
 import type { AskReport } from '@/domain/ask/ask'
+import type { AuditReport } from '@/domain/audit/report'
 import { repos, type Session, type SessionMessage } from '@/db'
 import type { CouncilReport } from '@/domain/council/engine'
 import type { IdeaReport } from '@/domain/ideas/report'
@@ -59,6 +70,12 @@ const messages = ref<SessionMessage[]>([])
 const ideaReport = computed(() =>
   session.value?.finalReport && (session.value.type === 'new_idea' || session.value.type === 'kill_idea')
     ? (session.value.finalReport as CouncilReport<IdeaReport>)
+    : null,
+)
+
+const findingsReport = computed(() =>
+  session.value?.finalReport && (session.value.type === 'audit' || session.value.type === 'review_changes')
+    ? (session.value.finalReport as CouncilReport<AuditReport>)
     : null,
 )
 

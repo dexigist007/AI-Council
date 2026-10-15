@@ -1,6 +1,7 @@
 // Native layer stays thin: secrets, ai_http, indexer, git and fs commands land here in later phases.
 
 mod ai_http;
+mod git;
 mod projects;
 mod providers;
 mod secrets;
@@ -70,7 +71,8 @@ pub fn run() {
             projects::project_forget_root,
             projects::project_default_excludes,
             projects::project_scan,
-            projects::project_read_files
+            projects::project_read_files,
+            git::git_run
         ])
         .run(tauri::generate_context!())
         .expect("error while running AI Council");

@@ -18,19 +18,7 @@
           <div class="text-caption text-grey-7 q-mb-xs">Odak alanları (her biri için yerel aramayla kod seçilir)</div>
           <q-option-group v-model="focus" :options="AUDIT_FOCUS.map((f) => ({ label: f.label, value: f.id }))" type="checkbox" inline @update:model-value="prepare" />
         </div>
-        <q-banner v-if="slots.length === 0" rounded class="bg-orange-1 text-orange-10">Etkin ve modeli seçilmiş bir sağlayıcı yok (Settings).</q-banner>
-        <template v-else>
-          <div class="row q-col-gutter-sm">
-            <q-btn-toggle v-model="mode" class="col-auto" no-caps unelevated toggle-color="secondary"
-              :options="[{ label: 'FAST', value: 'fast' }, { label: 'BALANCED', value: 'balanced' }]" />
-            <q-input v-model.number="budget" class="col-3" dense outlined type="number" step="0.5" label="Bütçe (USD)" />
-          </div>
-          <div v-for="(p, i) in members" :key="i" class="row q-col-gutter-sm items-center">
-            <q-select v-model="p.slot" class="col-6" dense outlined :options="slotOptions" emit-value map-options label="Model" />
-            <q-select v-model="p.roleId" class="col" dense outlined :options="roleOptions" emit-value map-options label="Rol" />
-          </div>
-          <q-select v-model="judgeSlot" dense outlined :options="slotOptions" emit-value map-options label="Judge" style="max-width: 50%" />
-        </template>
+        <CouncilMembers v-model="config" :roles="roles" />
         <div v-if="context">
           <div class="text-caption">
             Gönderilecek: {{ chunks.length }} kod parçası, {{ context.files.length }} dosya · ~{{ (context.tokens / 1000).toFixed(1) }}k token (her üyeye) ·
@@ -74,17 +62,16 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import CouncilMembers from '@/components/council/CouncilMembers.vue'
 import CouncilProgress from '@/components/council/CouncilProgress.vue'
 import { repos, type BrainFact, type ChunkWithPath, type Project } from '@/db'
 import type { AskContext } from '@/domain/ask/context'
-import { auditContext, auditRoles, buildAuditTask, selectAuditChunks } from '@/domain/audit/audit'
+import { auditContext, auditRoles, buildAuditTask, selectAuditChunks, sourcesFromExcerpts } from '@/domain/audit/audit'
 import { AUDIT_FOCUS } from '@/domain/audit/categories'
 import { localFindings } from '@/domain/audit/local'
 import type { AuditReport } from '@/domain/audit/report'
 import { priceLookup, type PriceLookup } from '@/domain/cost/pricing'
-import { estimateCouncil, type CouncilConfig, type CouncilMode, type Participant } from '@/domain/council/engine'
-import { roleBrief, roleIds } from '@/domain/prompts/registry'
-import { loadModelSlots, type ModelSlot } from '@/domain/providers/available'
+import { estimateCouncil, type CouncilConfig } from '@/domain/council/engine'
 import { useCouncilRun } from '@/stores/councilRun'
 
 const props = defineProps<{ project: Project }>()
@@ -94,32 +81,18 @@ const store = useCouncilRun()
 const scanning = ref(false)
 const localResult = ref<string | null>(null)
 const focus = ref<string[]>(['security', 'error_handling'])
-const mode = ref<CouncilMode>('fast')
-const budget = ref(1)
-const slots = ref<ModelSlot[]>([])
-const members = ref<{ slot: string; roleId: string }[]>([])
-const judgeSlot = ref('')
 const price = ref<PriceLookup>(() => undefined)
+const config = ref<CouncilConfig | null>(null)
 const facts = ref<BrainFact[]>([])
 const chunks = ref<ChunkWithPath[]>([])
 const context = ref<AskContext | null>(null)
 
 const runHere = computed(() => (store.active?.projectId === props.project.id ? store.active : null))
-const slotOptions = computed(() => slots.value.map((s) => ({ label: s.label, value: s.key })))
-const roleOptions = roleIds().map((id) => ({ label: roleBrief(id).label, value: id }))
+const roles = computed(() => auditRoles(focus.value))
 const report = computed(() => (runHere.value?.auditReport as { judge?: AuditReport } | undefined)?.judge)
 const summary = computed(() => report.value?.summary ?? '')
 const opportunities = computed(() => report.value?.opportunities ?? [])
 
-const toParticipant = (slotKey: string, id: string, roleId: string): Participant => {
-  const s = slots.value.find((x) => x.key === slotKey)!
-  return { id, provider: s.provider, model: s.model, roleId, maxTokens: s.maxTokens ?? undefined, temperature: s.temperature ?? undefined }
-}
-const config = computed<CouncilConfig | null>(() =>
-  members.value.length >= 2 && judgeSlot.value
-    ? { mode: mode.value, participants: members.value.map((m, i) => toParticipant(m.slot, `p${i + 1}`, m.roleId)), judge: toParticipant(judgeSlot.value, 'judge', 'judge'), budgetUsd: budget.value > 0 ? budget.value : undefined }
-    : null,
-)
 const estimate = computed(() => (config.value && context.value ? estimateCouncil(buildAuditTask(props.project, context.value, focus.value), config.value, price.value) : null))
 const estimateLabel = computed(() => (!estimate.value ? '—' : estimate.value.usd === null ? 'fiyatsız' : `~$${estimate.value.usd.toFixed(3)}`))
 const disabledReason = computed(() => {
@@ -136,8 +109,6 @@ async function prepare() {
   const r = await repos()
   chunks.value = await selectAuditChunks(r.projectIndex, props.project.id, focus.value)
   context.value = auditContext(chunks.value, facts.value)
-  const roles = auditRoles(focus.value)
-  members.value.forEach((m, i) => (m.roleId = roles[i % roles.length]!))
 }
 
 async function localScan() {
@@ -156,20 +127,16 @@ async function localScan() {
 
 async function start() {
   if (!config.value || !context.value) return
-  await store.startAudit(props.project, focus.value, context.value, config.value)
+  await store.startProjectCouncil(props.project, buildAuditTask(props.project, context.value, focus.value), config.value,
+    sourcesFromExcerpts(context.value.sent), { focus: focus.value, sentFiles: context.value.files })
   emit('changed')
 }
 
 onMounted(async () => {
   const r = await repos()
-  const [s, p, f] = await Promise.all([loadModelSlots(), r.modelPrices.list(), r.brainFacts.forContext(props.project.id)])
-  slots.value = s
+  const [p, f] = await Promise.all([r.modelPrices.list(), r.brainFacts.forContext(props.project.id)])
   price.value = priceLookup(p)
   facts.value = f
-  if (s.length) {
-    members.value = Array.from({ length: Math.min(Math.max(s.length, 2), 3) }, (_, i) => ({ slot: s[i % s.length]!.key, roleId: '' }))
-    judgeSlot.value = s[s.length - 1]!.key
-  }
   if (props.project.indexedAt) await prepare()
 })
 </script>
