@@ -6,7 +6,7 @@
       <q-item v-for="s in rows" :key="s.id" clickable :to="`/council/${s.id}`">
         <q-item-section>
           <q-item-label>{{ titles[s.ideaId ?? ''] ?? '—' }}</q-item-label>
-          <q-item-label caption>{{ TYPE_LABEL[s.type] }} · {{ s.mode.toUpperCase() }} · {{ new Date(s.createdAt).toLocaleString() }}</q-item-label>
+          <q-item-label caption>{{ sessionLabel(s) }} · {{ s.mode.toUpperCase() }} · {{ new Date(s.createdAt).toLocaleString() }}</q-item-label>
         </q-item-section>
         <q-item-section side>
           <q-badge :color="STATUS_COLOR[s.status]">{{ s.status }}</q-badge>
@@ -20,7 +20,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { repos, type Session } from '@/db'
-import { STATUS_COLOR, TYPE_LABEL } from './sessionLabels'
+import { STATUS_COLOR, sessionLabel } from './sessionLabels'
 
 const rows = ref<Session[]>([])
 const titles = ref<Record<string, string>>({})

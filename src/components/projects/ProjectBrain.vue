@@ -1,0 +1,120 @@
+<template>
+  <div class="stack">
+    <div class="row items-center">
+      <div class="col text-caption text-grey-8">
+        <q-badge outline color="primary">OBSERVED</q-badge> koddan okundu ·
+        <q-badge outline color="orange-9">INFERRED</q-badge> AI önerisi, onay bekliyor ·
+        <q-badge outline color="positive">USER CONFIRMED</q-badge> senin onayladığın.
+        Sonraki AI analizlerine onaylı bilgiler önce, öneriler etiketli olarak gider.
+      </div>
+      <q-btn unelevated color="primary" icon="auto_awesome" label="AI ile taslak oluştur" :disable="!project.indexedAt" @click="dialog = true" />
+    </div>
+    <q-banner v-if="message" rounded class="bg-blue-1">{{ message }}<template #action><q-btn flat dense icon="close" @click="message = null" /></template></q-banner>
+    <div v-if="pendingCount" class="text-caption text-orange-9">{{ pendingCount }} öneri onay bekliyor.</div>
+
+    <q-card v-for="section in sections" :key="section" flat bordered>
+      <q-card-section class="text-subtitle2 q-pb-sm">{{ SECTION_LABEL[section] }}</q-card-section>
+      <q-list dense separator>
+        <q-item v-for="f in bySection[section] ?? []" :key="f.id" :class="f.status === 'pending' ? 'bg-orange-1' : ''">
+          <q-item-section side top><q-badge outline :color="SOURCE[f.source].color">{{ SOURCE[f.source].label }}</q-badge></q-item-section>
+          <q-item-section>
+            <q-input v-if="editing === f.id" v-model="editText" dense autofocus autogrow @keyup.enter="confirm(f.id, editText)" />
+            <q-item-label v-else>{{ f.statement }}</q-item-label>
+            <q-item-label v-if="f.evidence.length" caption>
+              <q-icon name="description" size="xs" /> {{ f.evidence.map((e) => e.file).join(', ') }}
+            </q-item-label>
+            <q-item-label v-else-if="f.source === 'inferred'" caption class="text-orange-9">Kanıt dosyası yok</q-item-label>
+          </q-item-section>
+          <q-item-section v-if="f.source !== 'observed'" side>
+            <div class="row no-wrap">
+              <template v-if="editing === f.id">
+                <q-btn flat dense round icon="check" color="positive" @click="confirm(f.id, editText)"><q-tooltip>Kaydet ve onayla</q-tooltip></q-btn>
+                <q-btn flat dense round icon="close" @click="editing = null" />
+              </template>
+              <template v-else>
+                <q-btn v-if="f.status === 'pending'" flat dense round icon="check" color="positive" @click="confirm(f.id)"><q-tooltip>Onayla</q-tooltip></q-btn>
+                <q-btn flat dense round icon="edit" @click="startEdit(f)"><q-tooltip>Düzenle ve onayla</q-tooltip></q-btn>
+                <q-btn flat dense round icon="delete_outline" color="negative" @click="reject(f.id)"><q-tooltip>Reddet</q-tooltip></q-btn>
+              </template>
+            </div>
+          </q-item-section>
+        </q-item>
+        <q-item v-if="section !== 'stack'">
+          <q-item-section>
+            <q-input v-model="drafts[section]" dense borderless placeholder="+ Bilgi ekle (onaylı olarak kaydedilir)" @keyup.enter="add(section)" />
+          </q-item-section>
+        </q-item>
+      </q-list>
+    </q-card>
+
+    <BrainDraftDialog v-model="dialog" :project="project" @done="onDraft" />
+  </div>
+</template>
+
+<script setup lang="ts">
+import { computed, onMounted, reactive, ref } from 'vue'
+import BrainDraftDialog from './BrainDraftDialog.vue'
+import { repos, type BrainFact, type Project } from '@/db'
+import { BRAIN_SECTIONS, SECTION_LABEL, type BrainSection } from '@/domain/brain/sections'
+
+const props = defineProps<{ project: Project }>()
+const emit = defineEmits<{ changed: [] }>()
+
+const SOURCE = {
+  observed: { label: 'OBSERVED', color: 'primary' },
+  inferred: { label: 'INFERRED', color: 'orange-9' },
+  user_confirmed: { label: 'USER CONFIRMED', color: 'positive' },
+} as const
+
+const sections: BrainSection[] = [...BRAIN_SECTIONS.slice(0, 3), 'stack', ...BRAIN_SECTIONS.slice(3)]
+const facts = ref<BrainFact[]>([])
+const dialog = ref(false)
+const message = ref<string | null>(null)
+const editing = ref<string | null>(null)
+const editText = ref('')
+const drafts = reactive<Record<string, string>>({})
+
+const visible = computed(() => facts.value.filter((f) => f.status !== 'rejected'))
+const bySection = computed(() => {
+  const out: Record<string, BrainFact[]> = {}
+  for (const f of visible.value) (out[f.section] ??= []).push(f)
+  return out
+})
+const pendingCount = computed(() => visible.value.filter((f) => f.status === 'pending').length)
+
+async function load() {
+  facts.value = await (await repos()).brainFacts.list(props.project.id)
+}
+
+async function confirm(id: string, statement?: string) {
+  await (await repos()).brainFacts.confirm(id, statement)
+  editing.value = null
+  await load()
+}
+
+function startEdit(f: BrainFact) {
+  editing.value = f.id
+  editText.value = f.statement.replace(/^\(düşük güven\)\s*/, '')
+}
+
+async function reject(id: string) {
+  await (await repos()).brainFacts.reject(id)
+  await load()
+}
+
+async function add(section: string) {
+  const text = drafts[section]?.trim()
+  if (!text) return
+  await (await repos()).brainFacts.addManual(props.project.id, section, text)
+  drafts[section] = ''
+  await load()
+}
+
+async function onDraft(msg: string) {
+  message.value = msg
+  await load()
+  emit('changed')
+}
+
+onMounted(load)
+</script>

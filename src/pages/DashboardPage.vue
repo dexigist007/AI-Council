@@ -21,8 +21,8 @@
           <q-list v-if="sessions.length" dense separator>
             <q-item v-for="s in sessions" :key="s.id" clickable :to="`/council/${s.id}`">
               <q-item-section>
-                <q-item-label>{{ titles[s.ideaId ?? ''] ?? TYPE_LABEL[s.type] }}</q-item-label>
-                <q-item-label caption>{{ TYPE_LABEL[s.type] }} · {{ new Date(s.createdAt).toLocaleDateString() }}</q-item-label>
+                <q-item-label>{{ titles[s.ideaId ?? ''] ?? sessionLabel(s) }}</q-item-label>
+                <q-item-label caption>{{ sessionLabel(s) }} · {{ new Date(s.createdAt).toLocaleDateString() }}</q-item-label>
               </q-item-section>
               <q-item-section side><q-badge :color="STATUS_COLOR[s.status]">{{ s.status }}</q-badge></q-item-section>
             </q-item>
@@ -39,7 +39,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { repos, type Idea, type Session } from '@/db'
 import { STATUS_LABEL } from '@/domain/ideas/labels'
-import { STATUS_COLOR, TYPE_LABEL } from './sessionLabels'
+import { STATUS_COLOR, sessionLabel } from './sessionLabels'
 
 const ideas = ref<Idea[]>([])
 const sessions = ref<Session[]>([])

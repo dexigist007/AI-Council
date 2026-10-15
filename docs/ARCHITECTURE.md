@@ -109,7 +109,17 @@ model_prices(provider, model, in_per_mtok, out_per_mtok, cached_per_mtok)
 ## 6. Project Brain
 
 Satır bazlı `brain_facts`. OBSERVED'ı yalnızca kod üretir; AI en fazla INFERRED yazar ve öneriler
-`pending` bekler, kullanıcı onayıyla USER_CONFIRMED olur. Kararlar, reddedilen fikirler, açık işler
+`pending` bekler, kullanıcı onayıyla (gerekirse düzenleyerek) USER_CONFIRMED olur.
+
+İlk taslak tek bir model çağrısıyla üretilir: dosya ağacı (sadece yollar), kök/docs README'leri ve
+manifest'ler, maskelemeden geçirilerek gönderilir; gönderilecek dosyalar, maskeleme sayısı ve tahmini
+maliyet çağrıdan önce gösterilir. Modelin uydurduğu dosya yolları kanıttan atılır. Yeni taslak sadece
+bekleyen önerilerin yerini alır; onaylanmış veya reddedilmiş bilgilere dokunmaz.
+
+Not: Tek modelli proje analizleri `sessions.type = 'ask_project'` altında, amacı `config.meta.purpose`
+içinde kaydedilir. Sebep: SQLite'ta CHECK kısıtını değiştirmek tablo yeniden oluşturmayı gerektirir ve
+yabancı anahtarlı alt tabloları riske atar. Yeni enum'lar için CHECK yerine uygulama tarafı doğrulama
+tercih edilecek. Kararlar, reddedilen fikirler, açık işler
 ayrı tutulmaz; ilgili tablolardan türetilir.
 
 ## 7. Findings ve öncelik

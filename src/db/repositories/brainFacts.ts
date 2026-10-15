@@ -39,6 +39,47 @@ export function brainFactsRepo(db: Db) {
       return rows.map(map)
     },
 
+    /** AI-proposed facts replace earlier *pending* proposals; confirmed and rejected facts stay. */
+    async replacePendingInferred(projectId: string, facts: { section: string; statement: string; evidence: BrainFact["evidence"] }[], sessionId: string | null): Promise<void> {
+      await db.execute("DELETE FROM brain_facts WHERE project_id = ? AND source = 'inferred' AND status = 'pending'", [projectId])
+      const now = nowIso()
+      for (const f of facts) {
+        await db.execute(
+          "INSERT INTO brain_facts (id, project_id, section, statement, source, evidence_json, origin_session_id, status, updated_at) VALUES (?, ?, ?, ?, 'inferred', ?, ?, 'pending', ?)",
+          [newId(), projectId, f.section, f.statement.trim(), JSON.stringify(f.evidence), sessionId, now],
+        )
+      }
+    },
+
+    /** User accepts a fact, optionally reworded. It becomes USER CONFIRMED. */
+    async confirm(id: string, statement?: string): Promise<void> {
+      await db.execute(
+        "UPDATE brain_facts SET source = 'user_confirmed', status = 'active', statement = COALESCE(?, statement), updated_at = ? WHERE id = ?",
+        [statement?.trim() || null, nowIso(), id],
+      )
+    },
+
+    async reject(id: string): Promise<void> {
+      await db.execute("UPDATE brain_facts SET status = 'rejected', updated_at = ? WHERE id = ?", [nowIso(), id])
+    },
+
+    async addManual(projectId: string, section: string, statement: string): Promise<void> {
+      await db.execute(
+        "INSERT INTO brain_facts (id, project_id, section, statement, source, status, updated_at) VALUES (?, ?, ?, ?, 'user_confirmed', 'active', ?)",
+        [newId(), projectId, section, statement.trim(), nowIso()],
+      )
+    },
+
+    /** Facts usable as context for later AI calls: confirmed and observed first, pending inferred last. */
+    async forContext(projectId: string): Promise<BrainFact[]> {
+      const rows = await db.select<Row>(
+        `SELECT * FROM brain_facts WHERE project_id = ? AND status IN ('active', 'pending')
+         ORDER BY CASE source WHEN 'user_confirmed' THEN 0 WHEN 'observed' THEN 1 ELSE 2 END, section`,
+        [projectId],
+      )
+      return rows.map(map)
+    },
+
     /**
      * Replaces the code-derived (observed) facts of a section. Only the indexer writes observed
      * facts, so they are active immediately; AI-inferred facts never go through here.

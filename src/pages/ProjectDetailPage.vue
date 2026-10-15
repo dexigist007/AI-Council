@@ -20,6 +20,7 @@
 
       <q-tabs v-model="tab" dense align="left" active-color="primary" indicator-color="primary" class="q-mb-md" no-caps>
         <q-tab name="overview" label="Overview" />
+        <q-tab name="brain" label="Project Brain" />
         <q-tab name="files" label="Files" />
         <q-tab v-for="t in LATER" :key="t.name" :name="t.name" :label="t.label" disable>
           <q-tooltip>{{ t.phase }}</q-tooltip>
@@ -30,6 +31,9 @@
       <q-tab-panels v-model="tab" animated class="bg-transparent">
         <q-tab-panel name="overview" class="q-pa-none">
           <ProjectOverview :project="project" :facts="facts" />
+        </q-tab-panel>
+        <q-tab-panel name="brain" class="q-pa-none">
+          <ProjectBrain :project="project" />
         </q-tab-panel>
         <q-tab-panel name="files" class="q-pa-none">
           <ProjectFiles :project-id="project.id" :refresh-key="refreshKey" />
@@ -45,6 +49,7 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import ProjectBrain from '@/components/projects/ProjectBrain.vue'
 import ProjectFiles from '@/components/projects/ProjectFiles.vue'
 import ProjectOverview from '@/components/projects/ProjectOverview.vue'
 import ProjectSettings from '@/components/projects/ProjectSettings.vue'
@@ -54,7 +59,6 @@ import { indexerDeps } from '@/domain/indexing/runtime'
 import { projectsFs } from '@/platform/tauri'
 
 const LATER = [
-  { name: 'brain', label: 'Project Brain', phase: 'Faz 7' },
   { name: 'ask', label: 'Ask Project', phase: 'Faz 8' },
   { name: 'audit', label: 'Audit', phase: 'Faz 9' },
   { name: 'findings', label: 'Findings', phase: 'Faz 9' },

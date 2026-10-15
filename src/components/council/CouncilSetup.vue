@@ -71,18 +71,13 @@ import { priceLookup, type PriceLookup } from '@/domain/cost/pricing'
 import { estimateCouncil, type CouncilConfig, type CouncilMode, type Participant } from '@/domain/council/engine'
 import { buildIdeaTask, ROLE_PRESETS, type IdeaMode } from '@/domain/ideas/task'
 import { roleBrief, roleIds } from '@/domain/prompts/registry'
-import { PROVIDERS } from '@/domain/providers/registry'
-import type { ProviderId } from '@/domain/providers/types'
-import { secrets } from '@/platform/tauri'
+import { loadModelSlots, type ModelSlot } from '@/domain/providers/available'
 
 const props = defineProps<{ idea: Idea; busy?: boolean }>()
 const emit = defineEmits<{ start: [mode: IdeaMode, config: CouncilConfig] }>()
 
-/** A usable model: enabled provider with a key and a default model. */
-interface Slot { key: string; provider: ProviderId; model: string; maxTokens: number | null; temperature: number | null }
-
 const loading = ref(true)
-const available = ref<Slot[]>([])
+const available = ref<ModelSlot[]>([])
 const price = ref<PriceLookup>(() => undefined)
 const ideaMode = ref<IdeaMode>('evaluate')
 const mode = ref<CouncilMode>('balanced')
@@ -90,8 +85,7 @@ const participants = ref<{ slot: string; roleId: string }[]>([])
 const judgeSlot = ref('')
 const budget = ref(1)
 
-const providerLabel = (id: ProviderId) => PROVIDERS.find((p) => p.id === id)?.label ?? id
-const slotOptions = computed(() => available.value.map((s) => ({ label: `${providerLabel(s.provider)} · ${s.model}`, value: s.key })))
+const slotOptions = computed(() => available.value.map((s) => ({ label: s.label, value: s.key })))
 const roleOptions = roleIds().map((id) => ({ label: roleBrief(id).label, value: id }))
 
 function assignRoles() {
@@ -143,14 +137,9 @@ function start() {
 }
 
 onMounted(async () => {
-  const r = await repos()
-  const [configs, prices] = await Promise.all([r.providerConfigs.list(), r.modelPrices.list()])
+  const [slots, prices] = await Promise.all([loadModelSlots(), (await repos()).modelPrices.list()])
   price.value = priceLookup(prices)
-  const candidates = configs.filter((c) => c.enabled && c.defaultModel)
-  const withKey = await Promise.all(candidates.map(async (c) => ((await secrets.exists(c.provider).catch(() => false)) ? c : null)))
-  available.value = withKey
-    .filter((c) => c !== null)
-    .map((c) => ({ key: `${c.provider}/${c.defaultModel}`, provider: c.provider, model: c.defaultModel!, maxTokens: c.maxTokens, temperature: c.temperature }))
+  available.value = slots
   if (available.value.length) {
     const n = Math.min(Math.max(available.value.length, 2), 4)
     participants.value = Array.from({ length: n }, (_, i) => ({ slot: available.value[i % available.value.length]!.key, roleId: '' }))

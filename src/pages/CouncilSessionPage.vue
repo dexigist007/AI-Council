@@ -3,7 +3,7 @@
     <div v-if="!session" class="text-grey-7">Yükleniyor…</div>
     <div v-else class="stack" style="max-width: 1100px">
       <div>
-        <div class="text-h5">{{ TYPE_LABEL[session.type] }} · {{ session.mode.toUpperCase() }}</div>
+        <div class="text-h5">{{ sessionLabel(session) }} · {{ session.mode.toUpperCase() }}</div>
         <div class="text-caption text-grey-7">
           {{ new Date(session.createdAt).toLocaleString() }} ·
           <q-badge :color="STATUS_COLOR[session.status]">{{ session.status }}</q-badge> ·
@@ -48,7 +48,7 @@ import IdeaReportView from '@/components/ideas/IdeaReportView.vue'
 import { repos, type Session, type SessionMessage } from '@/db'
 import type { CouncilReport } from '@/domain/council/engine'
 import type { IdeaReport } from '@/domain/ideas/report'
-import { STATUS_COLOR, TYPE_LABEL } from './sessionLabels'
+import { STATUS_COLOR, sessionLabel } from './sessionLabels'
 
 const route = useRoute()
 const session = ref<Session | null>(null)
