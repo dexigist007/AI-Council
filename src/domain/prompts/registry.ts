@@ -13,7 +13,9 @@ export interface RenderedPrompt extends PromptRef {
 const versions = new Map<string, Map<number, string>>()
 const roles = new Map<string, string>()
 
-for (const [path, text] of Object.entries(files)) {
+for (const [path, raw] of Object.entries(files)) {
+  // Windows checkouts may use CRLF; prompts are always handled with "\n".
+  const text = raw.replace(/\r\n?/g, '\n')
   const role = path.match(/^\/prompts\/roles\/([\w-]+)\.md$/)
   if (role) {
     roles.set(role[1]!, text.trim())
