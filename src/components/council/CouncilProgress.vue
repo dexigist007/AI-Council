@@ -21,7 +21,7 @@
       </div>
       <div class="row q-gutter-sm">
         <q-chip v-for="(m, id) in run.members" :key="id" dense :color="memberColor(m.status)" text-color="white" :icon="memberIcon(m.status)">
-          {{ id === 'judge' ? 'Judge' : id }}
+          {{ id === 'judge' ? 'Judge' : id }}<span v-if="m.label" class="q-ml-xs text-soft">· {{ m.label }}</span>
           <q-tooltip v-if="m.error">{{ m.error }}</q-tooltip>
         </q-chip>
       </div>
