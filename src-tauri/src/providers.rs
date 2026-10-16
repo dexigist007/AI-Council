@@ -10,6 +10,8 @@ pub enum Auth {
     Anthropic,
     /// `x-goog-api-key: <key>`.
     Google,
+    /// No key: local servers (Ollama, LM Studio) on this machine.
+    None,
 }
 
 pub struct Provider {
@@ -28,6 +30,12 @@ pub fn lookup(id: &str) -> Option<Provider> {
         "deepseek" => ("https://api.deepseek.com/v1", Auth::Bearer),
         "kimi" => ("https://api.moonshot.ai/v1", Auth::Bearer),
         "glm" => ("https://api.z.ai/api/paas/v4", Auth::Bearer),
+        "openrouter" => ("https://openrouter.ai/api/v1", Auth::Bearer),
+        "groq" => ("https://api.groq.com/openai/v1", Auth::Bearer),
+        "mistral" => ("https://api.mistral.ai/v1", Auth::Bearer),
+        "cerebras" => ("https://api.cerebras.ai/v1", Auth::Bearer),
+        "ollama" => ("http://localhost:11434/v1", Auth::None),
+        "lmstudio" => ("http://localhost:1234/v1", Auth::None),
         _ => return None,
     };
     Some(Provider { base_url, auth })
@@ -46,7 +54,11 @@ pub fn build_url(p: &Provider, path: &str) -> Result<url::Url, String> {
     }
     let base = url::Url::parse(p.base_url).map_err(|e| e.to_string())?;
     let full = url::Url::parse(&format!("{}{}", p.base_url, path)).map_err(|e| e.to_string())?;
-    if full.scheme() != "https"
+    // Plain http only for keyless local servers, and only on this machine.
+    let local_ok = matches!(p.auth, Auth::None)
+        && full.scheme() == "http"
+        && matches!(full.host_str(), Some("localhost") | Some("127.0.0.1"));
+    if (full.scheme() != "https" && !local_ok)
         || full.host_str() != base.host_str()
         || !full.path().starts_with(base.path())
     {
@@ -81,5 +93,16 @@ mod tests {
             assert!(build_url(&p, bad).is_err(), "{bad} should be rejected");
         }
         assert!(lookup("evil").is_none());
+    }
+
+    #[test]
+    fn local_providers_stay_on_localhost() {
+        let p = lookup("ollama").unwrap();
+        let u = build_url(&p, "/chat/completions").unwrap();
+        assert_eq!(u.as_str(), "http://localhost:11434/v1/chat/completions");
+        assert!(build_url(&p, "@evil.com/x").is_err());
+        // A keyed provider never gets plain http.
+        let fake = Provider { base_url: "http://localhost:1/v1", auth: Auth::Bearer };
+        assert!(build_url(&fake, "/x").is_err());
     }
 }

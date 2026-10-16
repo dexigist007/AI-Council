@@ -4,7 +4,8 @@
       <div class="text-subtitle1">{{ meta.label }}</div>
       <q-badge v-if="meta.note" color="orange-8" :label="meta.note" />
       <q-space />
-      <q-chip dense :color="hasKey ? 'positive' : 'grey-5'" text-color="white" :icon="hasKey ? 'key' : 'key_off'">
+      <q-chip v-if="meta.keyless" dense color="positive" text-color="white" icon="computer">Anahtar gerekmez</q-chip>
+      <q-chip v-else dense :color="hasKey ? 'positive' : 'grey-5'" text-color="white" :icon="hasKey ? 'key' : 'key_off'">
         {{ hasKey ? 'Anahtar kayıtlı' : 'Anahtar yok' }}
       </q-chip>
       <q-toggle v-model="config.enabled" label="Etkin" :disable="!hasKey" @update:model-value="save" />
@@ -14,7 +15,11 @@
     </q-card-section>
 
     <q-card-section class="q-pt-none q-gutter-y-sm">
-      <div class="row q-col-gutter-sm items-center">
+      <div v-if="meta.keyless" class="text-caption text-grey-7">
+        Sunucuyu bu bilgisayarda çalıştır ({{ meta.keyUrl }}), bir model indir (ör. <code>ollama pull qwen2.5:7b</code>),
+        sonra modelleri yenile.
+      </div>
+      <div v-else class="row q-col-gutter-sm items-center">
         <q-input
           v-model="keyInput" class="col" dense outlined type="password" autocomplete="off" bottom-slots
           :label="hasKey ? 'Yeni anahtar (değiştirmek için)' : 'API anahtarı'"
@@ -156,6 +161,6 @@ const test = () => run('test', async () => {
 })
 
 onMounted(async () => {
-  hasKey.value = await secrets.exists(props.meta.id).catch(() => false)
+  hasKey.value = props.meta.keyless === true || (await secrets.exists(props.meta.id).catch(() => false))
 })
 </script>

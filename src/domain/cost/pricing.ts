@@ -5,7 +5,12 @@ export type PriceLookup = (provider: ProviderId, model: string) => ModelPrice | 
 
 export function priceLookup(prices: ModelPrice[]): PriceLookup {
   const byKey = new Map(prices.map((p) => [`${p.provider}/${p.model}`, p]))
-  return (provider, model) => byKey.get(`${provider}/${model}`)
+  return (provider, model) =>
+    byKey.get(`${provider}/${model}`) ??
+    // Local models and OpenRouter ":free" models cost nothing; no need to enter a price.
+    (provider === 'ollama' || provider === 'lmstudio' || model.endsWith(':free')
+      ? { provider, model, inPerMtok: 0, outPerMtok: 0, cachedPerMtok: null }
+      : undefined)
 }
 
 /** Cost in USD, or null when the model has no price entry (shown as "unpriced", never as $0). */

@@ -1,4 +1,5 @@
 export type ProviderId = 'openai' | 'anthropic' | 'gemini' | 'deepseek' | 'kimi' | 'glm'
+  | 'openrouter' | 'groq' | 'mistral' | 'cerebras' | 'ollama' | 'lmstudio'
 
 export interface ChatMessage {
   role: 'user' | 'assistant'

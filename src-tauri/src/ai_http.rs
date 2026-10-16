@@ -99,7 +99,10 @@ async fn perform(req: AiRequest, on_event: Channel<StreamEvent>) -> Result<AiRes
     let provider =
         providers::lookup(&req.provider).ok_or(format!("unknown provider: {}", req.provider))?;
     let url = providers::build_url(&provider, &req.path)?;
-    let key = crate::secrets::read(&req.provider)?;
+    let key = match provider.auth {
+        Auth::None => String::new(),
+        _ => crate::secrets::read(&req.provider)?,
+    };
 
     let method = match req.method.as_str() {
         "GET" => reqwest::Method::GET,
@@ -113,6 +116,7 @@ async fn perform(req: AiRequest, on_event: Channel<StreamEvent>) -> Result<AiRes
             .header("x-api-key", &key)
             .header("anthropic-version", "2023-06-01"),
         Auth::Google => builder.header("x-goog-api-key", &key),
+        Auth::None => builder,
     };
     if let Some(body) = &req.body {
         builder = builder

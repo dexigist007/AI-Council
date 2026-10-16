@@ -1,6 +1,6 @@
 import { repos } from '@/db'
 import { secrets } from '@/platform/tauri'
-import { PROVIDERS } from './registry'
+import { PROVIDERS, isKeyless } from './registry'
 import type { ProviderId } from './types'
 
 /** A model the user can pick: enabled provider, key in the keychain, default model chosen. */
@@ -15,7 +15,7 @@ export interface ModelSlot {
 
 export async function loadModelSlots(): Promise<ModelSlot[]> {
   const configs = (await (await repos()).providerConfigs.list()).filter((c) => c.enabled && c.defaultModel)
-  const withKey = await Promise.all(configs.map(async (c) => ((await secrets.exists(c.provider).catch(() => false)) ? c : null)))
+  const withKey = await Promise.all(configs.map(async (c) => (isKeyless(c.provider) || (await secrets.exists(c.provider).catch(() => false)) ? c : null)))
   return withKey
     .filter((c) => c !== null)
     .map((c) => ({
