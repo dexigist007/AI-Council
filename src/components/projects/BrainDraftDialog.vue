@@ -11,7 +11,7 @@
       <q-card-section v-if="loading" class="text-grey-7">Gönderilecek içerik hazırlanıyor…</q-card-section>
       <template v-else>
         <q-card-section class="q-pt-none">
-          <q-banner v-if="slots.length === 0" rounded class="bg-orange-1 text-orange-10">
+          <q-banner v-if="slots.length === 0" rounded class="tone-warn">
             Etkin ve modeli seçilmiş bir sağlayıcı yok (Settings).
           </q-banner>
           <q-select v-else v-model="slotKey" dense outlined :options="slots.map((s) => ({ label: s.label, value: s.key }))" emit-value map-options label="Model" />
@@ -27,7 +27,7 @@
           <div class="text-caption">
             ~{{ (context.tokens / 1000).toFixed(1) }}k token giriş · tahmini maliyet <b>{{ costLabel }}</b>
           </div>
-          <div class="text-caption" :class="context.redactions ? 'text-orange-9' : 'text-grey-7'">
+          <div class="text-caption" :class="context.redactions ? 'text-warn' : 'text-grey-7'">
             {{ context.redactions ? `${context.redactions} olası gizli bilgi maskelendi (********).` : 'Maskelenecek gizli bilgi bulunmadı.' }}
             .env ve anahtar dosyaları hiçbir zaman okunmaz.
           </div>

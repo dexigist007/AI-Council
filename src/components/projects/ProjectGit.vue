@@ -1,6 +1,6 @@
 <template>
   <div class="stack">
-    <q-banner v-if="error" rounded :class="notRepo ? 'bg-grey-3' : 'bg-red-1 text-negative'">
+    <q-banner v-if="error" rounded :class="notRepo ? 'tone-muted' : 'tone-danger'">
       {{ notRepo ? 'Bu klasör bir git deposu değil.' : error }}
     </q-banner>
 
@@ -11,7 +11,7 @@
             <span v-if="status.upstream" class="text-caption text-grey-7"> → {{ status.upstream }}
               <span v-if="status.ahead">· {{ status.ahead }} ileride</span><span v-if="status.behind"> · {{ status.behind }} geride</span></span>
           </div>
-          <div v-if="commits[0]" class="text-caption text-grey-8">Son commit: <code>{{ commits[0].hash.slice(0, 8) }}</code> {{ commits[0].subject }}</div>
+          <div v-if="commits[0]" class="text-caption text-soft">Son commit: <code>{{ commits[0].hash.slice(0, 8) }}</code> {{ commits[0].subject }}</div>
           <q-space />
           <q-btn flat dense icon="refresh" @click="load" />
         </q-card-section>
@@ -56,7 +56,7 @@
           <CouncilMembers v-model="config" :roles="REVIEW_ROLES" />
           <div v-if="review" class="text-caption">
             Gönderilecek: {{ review.files.length }} dosya · ~{{ (review.tokens / 1000).toFixed(1) }}k token (her üyeye) · tahmini toplam <b>{{ estimateLabel }}</b> ·
-            <span :class="review.redactions ? 'text-orange-9' : ''">{{ review.redactions }} maskeleme</span>
+            <span :class="review.redactions ? 'text-warn' : ''">{{ review.redactions }} maskeleme</span>
             <div v-if="review.skipped.length" class="text-grey-7">Dahil edilmeyen: {{ review.skipped.map((s) => `${s.path} (${SKIP_LABEL[s.reason] ?? s.reason})`).join(', ') }}</div>
           </div>
         </q-card-section>

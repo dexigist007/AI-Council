@@ -33,7 +33,7 @@
         <q-select v-model="slotKey" class="col-5" dense outlined :options="slots.map((s) => ({ label: s.label, value: s.key }))" emit-value map-options label="Model" />
         <div class="col text-caption">
           ~{{ (context.tokens / 1000).toFixed(1) }}k token · {{ costLabel }} · Onaylı Brain bilgileri de gider.
-          <span :class="context.redactions ? 'text-orange-9' : 'text-grey-7'">{{ context.redactions ? `${context.redactions} gizli bilgi maskelendi.` : 'Maskelenecek bir şey yok.' }}</span>
+          <span :class="context.redactions ? 'text-warn' : 'text-grey-7'">{{ context.redactions ? `${context.redactions} gizli bilgi maskelendi.` : 'Maskelenecek bir şey yok.' }}</span>
         </div>
         <div class="col-auto">
           <q-btn v-if="!asking" unelevated color="primary" icon="send" label="Sor" :disable="!question.trim() || !slotKey || selected.size === 0" @click="ask" />

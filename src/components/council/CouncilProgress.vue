@@ -26,7 +26,7 @@
         </q-chip>
       </div>
       <div v-if="run.error" class="text-negative q-mt-sm">{{ run.error }}</div>
-      <div v-if="run.unpriced.length" class="text-caption text-orange-9 q-mt-sm">
+      <div v-if="run.unpriced.length" class="text-caption text-warn q-mt-sm">
         Fiyatsız modeller maliyete dahil değil: {{ run.unpriced.join(', ') }}
       </div>
     </q-card-section>

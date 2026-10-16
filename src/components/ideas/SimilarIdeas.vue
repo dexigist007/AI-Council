@@ -1,5 +1,5 @@
 <template>
-  <q-banner v-if="matches.length" rounded class="bg-amber-1 text-amber-10">
+  <q-banner v-if="matches.length" rounded class="tone-warn">
     <template #avatar><q-icon name="history" /></template>
     Bu fikre benzeyen kayıtlar var:
     <div v-for="m in matches" :key="m.idea.id" class="q-mt-xs">

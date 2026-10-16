@@ -8,7 +8,7 @@
           :key="item.name"
           :to="{ name: item.name }"
           clickable
-          active-class="text-primary bg-blue-1"
+          active-class="text-primary tone-info"
         >
           <q-item-section avatar><q-icon :name="item.icon" /></q-item-section>
           <q-item-section>{{ item.label }}</q-item-section>

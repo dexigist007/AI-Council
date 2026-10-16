@@ -10,7 +10,7 @@
           </q-card-section></q-card>
         </div>
       </div>
-      <q-banner v-if="project.indexStats.truncated" rounded class="bg-orange-1 text-orange-10">
+      <q-banner v-if="project.indexStats.truncated" rounded class="tone-warn">
         Dosya sınırına (20.000) ulaşıldı; indeks eksik. Settings sekmesinden gereksiz klasörleri hariç tut.
       </q-banner>
 

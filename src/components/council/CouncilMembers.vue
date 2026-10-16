@@ -1,6 +1,6 @@
 <template>
   <div class="stack">
-    <q-banner v-if="slots.length === 0" rounded class="bg-orange-1 text-orange-10">Etkin ve modeli seçilmiş bir sağlayıcı yok (Settings).</q-banner>
+    <q-banner v-if="slots.length === 0" rounded class="tone-warn">Etkin ve modeli seçilmiş bir sağlayıcı yok (Settings).</q-banner>
     <template v-else>
       <div class="row q-col-gutter-sm items-center">
         <q-btn-toggle v-model="mode" class="col-auto" no-caps unelevated toggle-color="secondary"

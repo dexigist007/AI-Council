@@ -5,7 +5,7 @@
       <div class="row items-start">
         <div class="col">
           <div class="text-h5">{{ idea.title }}</div>
-          <div class="text-grey-8 q-mt-xs" style="white-space: pre-wrap">{{ idea.body }}</div>
+          <div class="text-soft q-mt-xs" style="white-space: pre-wrap">{{ idea.body }}</div>
         </div>
         <div class="col-auto q-gutter-sm">
           <q-badge :color="idea.status === 'evaluating' ? 'orange' : 'primary'">{{ STATUS_LABEL[idea.status] }}</q-badge>
@@ -23,7 +23,7 @@
 
       <SimilarIdeas :text="`${idea.title} ${idea.body}`" :ideas="others" :exclude-id="idea.id" />
 
-      <q-banner v-if="parked" rounded class="bg-grey-3">
+      <q-banner v-if="parked" rounded class="tone-muted">
         Bu fikir Graveyard'da ({{ STATUS_LABEL[idea.status] }}). Gerekçe: {{ idea.rejectReason ?? '—' }}
         <span v-if="idea.revisitCondition"><br />Yeniden değerlendirme koşulu: {{ idea.revisitCondition }}</span>
         <template #action><q-btn flat label="Yeniden aç" @click="reopen" /></template>

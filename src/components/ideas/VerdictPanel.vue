@@ -1,13 +1,13 @@
 <template>
-  <q-card flat bordered class="bg-blue-1">
+  <q-card flat bordered class="tone-info">
     <q-card-section>
       <div class="text-subtitle1">Senin kararın</div>
-      <div class="text-caption text-grey-8">
+      <div class="text-caption text-soft">
         Council'ın önerisi bir karar değildir. Fikrin durumu ve Decision Log sadece burada onayladığında değişir.
       </div>
     </q-card-section>
     <q-card-section class="q-pt-none q-gutter-sm">
-      <q-btn-toggle v-model="decision" unelevated no-caps toggle-color="primary" color="white" text-color="dark"
+      <q-btn-toggle v-model="decision" unelevated no-caps toggle-color="primary" :color="$q.dark.isActive ? 'grey-9' : 'white'" :text-color="$q.dark.isActive ? 'white' : 'dark'"
         :options="DECISIONS.map((d) => ({ label: d === suggested ? `${d} (öneri)` : d, value: d }))" />
       <q-input v-model="reason" dense outlined autogrow label="Gerekçe" />
       <q-input v-if="parks" v-model="revisit" dense outlined autogrow label="Ne değişirse yeniden değerlendirilsin?" />

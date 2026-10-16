@@ -23,7 +23,7 @@
           <div class="text-caption">
             Gönderilecek: {{ chunks.length }} kod parçası, {{ context.files.length }} dosya · ~{{ (context.tokens / 1000).toFixed(1) }}k token (her üyeye) ·
             tahmini toplam <b>{{ estimateLabel }}</b> ·
-            <span :class="context.redactions ? 'text-orange-9' : ''">{{ context.redactions }} maskeleme</span>
+            <span :class="context.redactions ? 'text-warn' : ''">{{ context.redactions }} maskeleme</span>
           </div>
           <q-expansion-item dense dense-toggle label="Gönderilecek dosyalar" class="text-caption">
             <div class="q-pl-md"><code v-for="f in context.files" :key="f" class="q-mr-sm">{{ f }}</code></div>

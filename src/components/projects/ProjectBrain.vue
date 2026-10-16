@@ -1,7 +1,7 @@
 <template>
   <div class="stack">
     <div class="row items-center">
-      <div class="col text-caption text-grey-8">
+      <div class="col text-caption text-soft">
         <q-badge outline color="primary">OBSERVED</q-badge> koddan okundu ·
         <q-badge outline color="orange-9">INFERRED</q-badge> AI önerisi, onay bekliyor ·
         <q-badge outline color="positive">USER CONFIRMED</q-badge> senin onayladığın.
@@ -9,13 +9,13 @@
       </div>
       <q-btn unelevated color="primary" icon="auto_awesome" label="AI ile taslak oluştur" :disable="!project.indexedAt" @click="dialog = true" />
     </div>
-    <q-banner v-if="message" rounded class="bg-blue-1">{{ message }}<template #action><q-btn flat dense icon="close" @click="message = null" /></template></q-banner>
-    <div v-if="pendingCount" class="text-caption text-orange-9">{{ pendingCount }} öneri onay bekliyor.</div>
+    <q-banner v-if="message" rounded class="tone-info">{{ message }}<template #action><q-btn flat dense icon="close" @click="message = null" /></template></q-banner>
+    <div v-if="pendingCount" class="text-caption text-warn">{{ pendingCount }} öneri onay bekliyor.</div>
 
     <q-card v-for="section in sections" :key="section" flat bordered>
       <q-card-section class="text-subtitle2 q-pb-sm">{{ SECTION_LABEL[section] }}</q-card-section>
       <q-list dense separator>
-        <q-item v-for="f in bySection[section] ?? []" :key="f.id" :class="f.status === 'pending' ? 'bg-orange-1' : ''">
+        <q-item v-for="f in bySection[section] ?? []" :key="f.id" :class="f.status === 'pending' ? 'tone-warn' : ''">
           <q-item-section side top><q-badge outline :color="SOURCE[f.source].color">{{ SOURCE[f.source].label }}</q-badge></q-item-section>
           <q-item-section>
             <q-input v-if="editing === f.id" v-model="editText" dense autofocus autogrow @keyup.enter="confirm(f.id, editText)" />
@@ -23,7 +23,7 @@
             <q-item-label v-if="f.evidence.length" caption>
               <q-icon name="description" size="xs" /> {{ f.evidence.map((e) => e.file).join(', ') }}
             </q-item-label>
-            <q-item-label v-else-if="f.source === 'inferred'" caption class="text-orange-9">Kanıt dosyası yok</q-item-label>
+            <q-item-label v-else-if="f.source === 'inferred'" caption class="text-warn">Kanıt dosyası yok</q-item-label>
           </q-item-section>
           <q-item-section v-if="f.source !== 'observed'" side>
             <div class="row no-wrap">

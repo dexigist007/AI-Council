@@ -11,7 +11,7 @@
       <q-toggle v-model="config.enabled" label="Etkin" :disable="!hasKey" @update:model-value="save" />
     </q-card-section>
     <q-card-section v-if="missing" class="q-py-none">
-      <q-banner dense rounded class="bg-orange-1 text-orange-10">Council'da kullanılamaz: {{ missing }}</q-banner>
+      <q-banner dense rounded class="tone-warn">Council'da kullanılamaz: {{ missing }}</q-banner>
     </q-card-section>
 
     <q-card-section class="q-pt-none q-gutter-y-sm">

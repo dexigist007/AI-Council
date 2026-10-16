@@ -16,7 +16,7 @@
 
     <q-card-section v-if="loading" class="text-grey-7">Sağlayıcılar yükleniyor…</q-card-section>
     <q-card-section v-else-if="available.length === 0">
-      <q-banner rounded class="bg-orange-1 text-orange-10">
+      <q-banner rounded class="tone-warn">
         Etkin ve modeli seçilmiş bir sağlayıcı yok. Settings'te en az bir sağlayıcıya anahtar ekleyip etkinleştir
         ve varsayılan modelini seç.
       </q-banner>
@@ -48,7 +48,7 @@
           <div class="text-grey-7">{{ estimate.calls }} çağrı · ~{{ Math.round(estimate.tokens / 1000) }}k token</div>
         </div>
       </q-card-section>
-      <q-card-section v-if="estimate.unpriced.length" class="q-pt-none text-caption text-orange-9">
+      <q-card-section v-if="estimate.unpriced.length" class="q-pt-none text-caption text-warn">
         Fiyatı girilmemiş modeller: {{ estimate.unpriced.join(', ') }} (Settings → Model fiyatları).
       </q-card-section>
 

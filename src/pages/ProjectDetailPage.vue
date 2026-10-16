@@ -11,7 +11,7 @@
         <q-btn unelevated color="primary" icon="sync" label="Yeniden indeksle" :loading="!!progress" @click="reindex" />
       </div>
 
-      <q-banner v-if="indexError" rounded class="bg-red-1 text-negative q-mb-md">
+      <q-banner v-if="indexError" rounded class="tone-danger q-mb-md">
         {{ indexError }}
         <template v-if="needsRepick" #action><q-btn flat label="Klasörü yeniden seç" @click="repick" /></template>
       </q-banner>

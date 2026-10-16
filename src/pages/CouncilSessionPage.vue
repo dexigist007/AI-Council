@@ -41,7 +41,7 @@
                 · {{ ((m.latencyMs ?? 0) / 1000).toFixed(1) }}s
               </q-item-section>
             </template>
-            <q-card flat class="q-pa-md bg-grey-1">
+            <q-card flat class="q-pa-md tone-muted">
               <div v-if="m.error" class="text-negative q-mb-sm">{{ m.error }}</div>
               <pre class="q-ma-none text-caption" style="white-space: pre-wrap; max-height: 400px; overflow: auto">{{ m.responseText ?? '(yanıt yok)' }}</pre>
             </q-card>
