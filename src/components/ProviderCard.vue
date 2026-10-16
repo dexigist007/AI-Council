@@ -9,6 +9,9 @@
       </q-chip>
       <q-toggle v-model="config.enabled" label="Etkin" :disable="!hasKey" @update:model-value="save" />
     </q-card-section>
+    <q-card-section v-if="missing" class="q-py-none">
+      <q-banner dense rounded class="bg-orange-1 text-orange-10">Council'da kullanılamaz: {{ missing }}</q-banner>
+    </q-card-section>
 
     <q-card-section class="q-pt-none q-gutter-y-sm">
       <div class="row q-col-gutter-sm items-center">
@@ -31,7 +34,7 @@
         <q-select
           v-model="config.defaultModel" class="col-12 col-md-6" dense outlined label="Varsayılan model"
           :options="models" use-input fill-input hide-selected input-debounce="0" new-value-mode="add-unique"
-          @input-value="(v: string) => (config.defaultModel = v)" @update:model-value="save"
+          @input-value="(v: string) => (config.defaultModel = v)" @update:model-value="save" @blur="save"
         >
           <template #after>
             <q-btn flat dense icon="refresh" :disable="!hasKey" :loading="busy === 'models'" @click="loadModels">
@@ -83,6 +86,14 @@ const status = ref<{ ok: boolean; text: string } | null>(null)
 const temperature = computed({
   get: () => config.value.temperature ?? '',
   set: (v: number | string) => (config.value.temperature = v === '' || Number.isNaN(Number(v)) ? null : Number(v)),
+})
+
+const missing = computed(() => {
+  const m: string[] = []
+  if (!hasKey.value) m.push('API anahtarı kaydet')
+  if (!config.value.enabled) m.push('"Etkin"i aç')
+  if (!config.value.defaultModel?.trim()) m.push('varsayılan model seç (↻ ile listeyi getir, listeden tıkla)')
+  return m.join(' · ')
 })
 
 const provider = () => createProvider(props.meta.id, tauriTransport)
