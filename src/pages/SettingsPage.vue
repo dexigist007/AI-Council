@@ -4,6 +4,7 @@
     <div class="text-grey-7 q-mb-lg">
       Anahtarlar macOS Keychain / Windows Credential Manager'da tutulur. İstekler doğrudan sağlayıcıya gider,
       arada sunucu yoktur.
+      <div class="text-caption q-mt-xs">Sürüm: {{ buildId }}</div>
     </div>
     <q-banner v-if="error" class="bg-negative text-white q-mb-md" rounded>{{ error }}</q-banner>
     <div v-if="configs" class="stack" style="max-width: 900px">
@@ -14,6 +15,7 @@
 </template>
 
 <script setup lang="ts">
+const buildId = __BUILD__
 import { onMounted, ref } from 'vue'
 import ModelPricesCard from '@/components/ModelPricesCard.vue'
 import ProviderCard from '@/components/ProviderCard.vue'
