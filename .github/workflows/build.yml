@@ -1,0 +1,46 @@
+name: Build desktop app
+
+# Builds unsigned installers on GitHub's macOS and Windows runners and attaches them to the run.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, 'claude/**']
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            # Universal binary: runs on Apple Silicon and Intel Macs.
+            args: --target universal-apple-darwin --bundles app,dmg
+            rust_targets: aarch64-apple-darwin,x86_64-apple-darwin
+            artifact: src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg
+            name: AI-Council-macOS
+          - os: windows-latest
+            args: --bundles nsis
+            rust_targets: ''
+            artifact: src-tauri/target/release/bundle/nsis/*.exe
+            name: AI-Council-Windows
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rust_targets }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - run: npm ci
+      - run: npm test
+      - run: npx tauri build ${{ matrix.args }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.name }}
+          path: ${{ matrix.artifact }}
+          if-no-files-found: error
