@@ -30,7 +30,7 @@ describe('findSimilarIdeas', () => {
 describe('idea task', () => {
   it('builds evaluate and kill tasks from versioned prompts', () => {
     const t = buildIdeaTask(idea('x', 'TV menus', 'for restaurants'), 'evaluate')
-    expect(t).toMatchObject({ type: 'new_idea', ideaId: 'x', promptVersions: { 'idea-brief': 1, 'idea-judge': 1 } })
+    expect(t).toMatchObject({ type: 'new_idea', ideaId: 'x', promptVersions: { 'idea-brief': 1, 'idea-judge': 2 } })
     expect(t.taskBrief).toContain('TV menus')
     const k = buildIdeaTask(idea('x', 'TV menus'), 'kill')
     expect(k.type).toBe('kill_idea')

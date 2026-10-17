@@ -6,6 +6,7 @@
       <div class="text-subtitle1">{{ statusLabel }}</div>
       <q-space />
       <div class="text-caption">Harcanan: <b>${{ run.spentUsd.toFixed(4) }}</b></div>
+      <q-btn v-if="$route.path !== '/live'" flat no-caps color="primary" icon="forum" label="Canlı izle" to="/live" />
       <q-btn v-if="run.status === 'running'" outline color="negative" icon="stop" label="Durdur" @click="$emit('cancel')" />
       <q-btn v-else flat dense icon="close" @click="$emit('dismiss')" />
     </q-card-section>

@@ -9,9 +9,49 @@
           <q-badge :color="STATUS_COLOR[session.status]">{{ session.status }}</q-badge> ·
           tahmini {{ session.estCost === null ? 'fiyatsız' : `$${session.estCost.toFixed(4)}` }} · gerçekleşen ${{ session.actualCost.toFixed(4) }}
           <span v-if="session.ideaId"> · <router-link :to="`/ideas/${session.ideaId}`">fikre git</router-link></span>
+          <span v-if="dMeta?.parentSessionId"> · <router-link :to="`/council/${dMeta.parentSessionId}`">önceki rapor</router-link></span>
         </div>
         <div v-if="session.error" class="text-negative q-mt-sm">{{ session.error }}</div>
       </div>
+
+      <q-card v-if="dMeta" flat bordered>
+        <q-card-section>
+          <div class="text-caption text-soft">İstek</div>
+          <div>{{ dMeta.question }}</div>
+          <template v-if="dMeta.followup">
+            <div class="text-caption text-soft q-mt-sm">Devam sorusu</div>
+            <div>{{ dMeta.followup }}</div>
+          </template>
+        </q-card-section>
+      </q-card>
+
+      <q-expansion-item v-if="feed" v-model="feedOpen" icon="forum" :label="`Tartışma (${feed.claims.length} iddia, ${feed.reviews.reduce((n, r) => n + r.reviews.length, 0)} değerlendirme)`"
+        header-class="text-subtitle1" class="debate-box">
+        <div class="q-pa-md"><DebateFeedView :feed="feed" judge-done /></div>
+      </q-expansion-item>
+
+      <template v-if="discoveryReport">
+        <DiscoveryReportView :report="discoveryReport" />
+        <q-card flat bordered>
+          <q-card-section>
+            <div class="text-subtitle2 q-mb-xs">Devam sorusu</div>
+            <div class="text-caption text-soft q-mb-sm">
+              Judge raporu senin sorunla günceller (tek çağrı). Örn: "3 numarayı oyun yerine B2B SaaS olarak düşün" veya "bütçem $1000 olsaydı ne değişirdi?"
+            </div>
+            <q-input v-model="followup" outlined autogrow label="Sorun" :disable="asking" />
+            <div class="row items-center q-mt-sm q-gutter-sm">
+              <q-btn unelevated color="primary" no-caps icon="send" label="Sor" :loading="asking" :disable="!followup.trim() || !followupModel" @click="ask" />
+              <span v-if="!followupModel" class="text-caption text-soft">Bu oturumun Judge modeli bulunamadı.</span>
+              <span v-else class="text-caption text-soft">{{ followupModel.provider }} · {{ followupModel.model }}</span>
+              <span v-if="askError" class="text-negative text-caption">{{ askError }}</span>
+            </div>
+            <div v-if="asking && liveText" class="q-mt-sm text-caption text-soft">
+              yazıyor… {{ liveText.length.toLocaleString() }} karakter
+              <div v-for="(l, i) in liveFragments(liveText)" :key="i">{{ l }}</div>
+            </div>
+          </q-card-section>
+        </q-card>
+      </template>
 
       <IdeaReportView v-if="ideaReport" :report="ideaReport.judge" :council="ideaReport" />
       <AskAnswerView v-if="askReport" :report="askReport" />
@@ -53,22 +93,32 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import IdeaReportView from '@/components/ideas/IdeaReportView.vue'
+import DebateFeedView from '@/components/council/DebateFeedView.vue'
+import DiscoveryReportView from '@/components/discovery/DiscoveryReportView.vue'
+import { feedFromReport, feedMembers, liveFragments } from '@/domain/council/feed'
+import { councilDeps } from '@/domain/council/runtime'
+import { askFollowup, discoveryMeta } from '@/domain/discovery/followup'
+import type { DiscoveryReport } from '@/domain/discovery/report'
+import { roleBrief } from '@/domain/prompts/registry'
+import type { ProviderId } from '@/domain/providers/types'
 import AskAnswerView from '@/components/projects/AskAnswerView.vue'
 import type { AskReport } from '@/domain/ask/ask'
 import type { AuditReport } from '@/domain/audit/report'
 import { repos, type Session, type SessionMessage } from '@/db'
-import type { CouncilReport } from '@/domain/council/engine'
+import type { CouncilConfig, CouncilReport } from '@/domain/council/engine'
 import type { IdeaReport } from '@/domain/ideas/report'
 import { STATUS_COLOR, sessionLabel } from './sessionLabels'
 
 const route = useRoute()
 const session = ref<Session | null>(null)
 const messages = ref<SessionMessage[]>([])
+const router = useRouter()
+const dMeta = computed(() => (session.value ? discoveryMeta(session.value.config) : null))
 const ideaReport = computed(() =>
-  session.value?.finalReport && (session.value.type === 'new_idea' || session.value.type === 'kill_idea')
+  session.value?.finalReport && !dMeta.value && (session.value.type === 'new_idea' || session.value.type === 'kill_idea')
     ? (session.value.finalReport as CouncilReport<IdeaReport>)
     : null,
 )
@@ -85,10 +135,68 @@ const askReport = computed(() =>
     : null,
 )
 
-onMounted(async () => {
+/** Discovery: the council's judge report, or a follow-up's revised report (stored bare). */
+const discoveryReport = computed<DiscoveryReport | null>(() => {
+  const rep = session.value?.finalReport
+  if (!rep || !dMeta.value) return null
+  return dMeta.value.purpose === 'discovery' ? (rep as CouncilReport<DiscoveryReport>).judge : (rep as DiscoveryReport)
+})
+
+/** Recorded debate of a multi-member council session, rebuilt from its report. */
+const feedOpen = ref(false)
+const feed = computed(() => {
+  const s = session.value
+  const cfg = s?.config as Partial<CouncilConfig> | undefined
+  const rep = s?.finalReport as CouncilReport<unknown> | null
+  if (!s || !cfg?.participants || !cfg.judge || !rep?.claims) return null
+  const label = (id: string) => { try { return roleBrief(id).label } catch { return id } }
+  const summaries = Object.fromEntries(
+    messages.value
+      .filter((m) => m.round === 'independent' && m.responseJson && typeof (m.responseJson as { summary?: unknown }).summary === 'string')
+      .map((m) => [m.participant, (m.responseJson as { summary: string }).summary]),
+  )
+  return feedFromReport(feedMembers(cfg.participants, cfg.judge, label), rep, summaries)
+})
+
+const followup = ref('')
+const asking = ref(false)
+const askError = ref('')
+const liveText = ref('')
+const followupModel = computed(() => {
+  const cfg = session.value?.config as { judge?: { provider: ProviderId; model: string; maxTokens?: number }; model?: { provider: ProviderId; model: string; maxTokens?: number } } | undefined
+  return cfg?.judge ?? cfg?.model ?? null
+})
+
+async function ask() {
+  if (!session.value || !dMeta.value || !discoveryReport.value || !followupModel.value) return
+  asking.value = true
+  askError.value = ''
+  liveText.value = ''
+  try {
+    const m = followupModel.value
+    const res = await askFollowup(
+      await councilDeps(),
+      { sessionId: session.value.id, meta: dMeta.value, report: discoveryReport.value },
+      followup.value.trim(),
+      { provider: m.provider, model: m.model, maxTokens: m.maxTokens },
+      { onDelta: (t) => (liveText.value += t) },
+    )
+    if (res.error) askError.value = res.error
+    else {
+      followup.value = ''
+      await router.push(`/council/${res.sessionId}`)
+    }
+  } finally {
+    asking.value = false
+  }
+}
+
+async function load(id: string) {
   const r = await repos()
-  const id = route.params.id as string
   session.value = await r.sessions.get(id)
   messages.value = await r.sessions.listMessages(id)
-})
+}
+
+onMounted(() => load(route.params.id as string))
+watch(() => route.params.id, (id) => id && load(id as string))
 </script>

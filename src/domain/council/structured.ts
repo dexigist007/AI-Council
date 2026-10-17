@@ -22,6 +22,8 @@ export interface StructuredRequest {
   user: string
   schemaName: string
   signal?: AbortSignal
+  /** Streamed reply text, for live display only; `attempt` restarts at each new call. */
+  onDelta?: (text: string, attempt: number) => void
 }
 
 export interface StructuredResult<T> {
@@ -77,7 +79,7 @@ export async function callStructured<T>(
           responseSchema: { name: req.schemaName, schema: jsonSchema },
           cacheSystem: true,
         },
-        { signal: req.signal },
+        { signal: req.signal, onDelta: req.onDelta && ((t) => req.onDelta!(t, attempt)) },
       )
       text = res.text
       usage = res.usage

@@ -9,9 +9,11 @@ export interface NavItem {
 // Single source for the sidebar and the routes, so they cannot drift apart.
 export const navItems: NavItem[] = [
   { name: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
+  { name: 'discovery', label: 'Keşif', icon: 'explore' },
   { name: 'ideas', label: 'Ideas', icon: 'lightbulb' },
   { name: 'projects', label: 'Projects', icon: 'folder' },
   { name: 'council', label: 'Council', icon: 'groups' },
+  { name: 'live', label: 'Canlı tartışma', icon: 'forum' },
   { name: 'findings', label: 'Findings', icon: 'bug_report' },
   { name: 'decisions', label: 'Decisions', icon: 'gavel' },
   { name: 'graveyard', label: 'Idea Graveyard', icon: 'inventory_2' },
@@ -20,6 +22,8 @@ export const navItems: NavItem[] = [
 
 const pages: Record<string, () => Promise<unknown>> = {
   dashboard: () => import('@/pages/DashboardPage.vue'),
+  discovery: () => import('@/pages/DiscoveryPage.vue'),
+  live: () => import('@/pages/LivePage.vue'),
   ideas: () => import('@/pages/IdeasPage.vue'),
   projects: () => import('@/pages/ProjectsPage.vue'),
   council: () => import('@/pages/CouncilPage.vue'),

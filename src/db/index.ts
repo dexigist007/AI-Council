@@ -8,11 +8,12 @@ import { projectsRepo } from './repositories/projects'
 import { modelPricesRepo } from './repositories/modelPrices'
 import { providerConfigsRepo } from './repositories/providerConfigs'
 import { sessionsRepo } from './repositories/sessions'
+import { settingsRepo } from './repositories/settings'
 
 export async function repos() {
   const db = await getDb()
   return { ideas: ideasRepo(db), sessions: sessionsRepo(db), decisions: decisionsRepo(db), providerConfigs: providerConfigsRepo(db), modelPrices: modelPricesRepo(db),
-    projects: projectsRepo(db), projectIndex: projectIndexRepo(db), brainFacts: brainFactsRepo(db), findings: findingsRepo(db) }
+    projects: projectsRepo(db), projectIndex: projectIndexRepo(db), brainFacts: brainFactsRepo(db), findings: findingsRepo(db), settings: settingsRepo(db) }
 }
 
 export type * from './repositories/ideas'

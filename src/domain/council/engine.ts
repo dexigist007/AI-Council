@@ -48,6 +48,8 @@ export interface CouncilReport<J> {
   claims: Claim[]
   reviews: Review[]
   missing: MissingPoint[]
+  /** Each member's round-1 position summary (absent in sessions recorded before it existed). */
+  positions?: { participantId: string; roleLabel: string; summary: string }[]
   /** Members whose analysis failed; the council continued without them. */
   failed: { participantId: string; error: string }[]
 }
@@ -56,6 +58,14 @@ export type CouncilEvent =
   | { type: 'round'; round: Round }
   | { type: 'call'; participantId: string; status: 'start' | 'done' | 'failed'; error?: string }
   | { type: 'cost'; spentUsd: number; unpriced: string[] }
+  /** Live reply text while a member is writing; `attempt` > 0 means a retry or repair restarted it. */
+  | { type: 'delta'; participantId: string; round: Round; text: string; attempt: number }
+  /** A member's round-1 analysis, as soon as it arrives (claims not numbered yet). */
+  | { type: 'analysis'; participantId: string; roleLabel: string; output: IndependentOutput }
+  /** Round 1 finished: the numbered claims later rounds refer to. */
+  | { type: 'claims'; claims: Claim[] }
+  /** A member's accepted cross-review. */
+  | { type: 'review'; participantId: string; roleLabel: string; reviews: Review[]; missing: MissingPoint[] }
 
 export interface CouncilDeps {
   provider: (id: ProviderId) => AIProvider
@@ -170,7 +180,11 @@ export async function runCouncil<J>(
     if (opts.signal?.aborted) throw new CancelledError()
     emit({ type: 'call', participantId: p.id, status: 'start' })
     const res = await callStructured(
-      { ...req, provider: deps.provider(p.provider), model: p.model, maxTokens: p.maxTokens ?? (p.id === 'judge' ? JUDGE_MAX_TOKENS : DEFAULT_MAX_TOKENS), temperature: p.temperature, signal: opts.signal },
+      {
+        ...req, provider: deps.provider(p.provider), model: p.model, maxTokens: p.maxTokens ?? (p.id === 'judge' ? JUDGE_MAX_TOKENS : DEFAULT_MAX_TOKENS),
+        temperature: p.temperature, signal: opts.signal,
+        onDelta: (text, attempt) => emit({ type: 'delta', participantId: p.id, round, text, attempt }),
+      },
       schema,
       { retryDelayMs: deps.retryDelayMs },
     )
@@ -185,9 +199,11 @@ export async function runCouncil<J>(
     const r1Prompts = config.participants.map((p) => ({ p, system: render('council-independent', memberVars(p, task, config)) }))
     checkBudget(r1Prompts.map(({ p, system }) => ({ p, inputText: system.text, expectedOut: EXPECTED_OUTPUT.independent })))
     const r1 = await Promise.all(
-      r1Prompts.map(({ p, system }) =>
-        ask('independent', p, { system, user: 'Give your independent analysis now.', schemaName: 'independent_analysis' }, IndependentOutput),
-      ),
+      r1Prompts.map(async ({ p, system }) => {
+        const res = await ask('independent', p, { system, user: 'Give your independent analysis now.', schemaName: 'independent_analysis' }, IndependentOutput)
+        if (res.data) emit({ type: 'analysis', participantId: p.id, roleLabel: roleBrief(p.roleId).label, output: res.data })
+        return res
+      }),
     )
     const analyses: MemberAnalysis[] = []
     const failed: CouncilReport<J>['failed'] = []
@@ -198,6 +214,7 @@ export async function runCouncil<J>(
     })
     if (analyses.length === 0) throw new CouncilError(`no member produced an analysis: ${failed.map((f) => f.error).join('; ')}`)
     const claims = collectClaims(analyses)
+    emit({ type: 'claims', claims })
 
     // Round 2 (balanced): cross-review of the compact council state.
     const reviews: Review[] = []
@@ -219,8 +236,11 @@ export async function runCouncil<J>(
         const p = members[i]!
         if (!res.data) return // a missing review weakens the debate but is not fatal
         const label = roleBrief(p.roleId).label
-        reviews.push(...acceptReviews(res.data, claims, p.id, label))
-        missing.push(...res.data.missing.map((m) => ({ participantId: p.id, roleLabel: label, ...m })))
+        const accepted = acceptReviews(res.data, claims, p.id, label)
+        const raised = res.data.missing.map((m) => ({ participantId: p.id, roleLabel: label, ...m }))
+        reviews.push(...accepted)
+        missing.push(...raised)
+        emit({ type: 'review', participantId: p.id, roleLabel: label, reviews: accepted, missing: raised })
       })
     }
 
@@ -237,7 +257,8 @@ export async function runCouncil<J>(
     const verdict = await ask('judge', config.judge, { system: judgeSystem, user: 'Write the final report now.', schemaName: 'final_report' }, task.judgeSchema)
     if (!verdict.data) throw new CouncilError(`judge failed: ${verdict.error}`)
 
-    const report: CouncilReport<J> = { judge: verdict.data, claims, reviews, missing, failed }
+    const positions = analyses.map((a) => ({ participantId: a.participantId, roleLabel: a.roleLabel, summary: a.output.summary }))
+    const report: CouncilReport<J> = { judge: verdict.data, claims, reviews, missing, positions, failed }
     await deps.sessions.complete(session.id, report)
     return { sessionId: session.id, status: 'completed', report }
   } catch (e) {

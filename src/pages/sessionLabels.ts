@@ -16,5 +16,7 @@ export const STATUS_COLOR: Record<SessionStatus, string> = {
 export function sessionLabel(s: Pick<Session, 'type' | 'config'>): string {
   const purpose = (s.config.meta as { purpose?: string } | undefined)?.purpose
   if (purpose === 'brain_draft') return 'Project Brain taslağı'
+  if (purpose === 'discovery') return 'Keşif'
+  if (purpose === 'discovery_followup') return 'Keşif · devam sorusu'
   return TYPE_LABEL[s.type]
 }

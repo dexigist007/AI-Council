@@ -96,7 +96,7 @@ describe('runCouncil', () => {
     expect(session.estCost).toBeGreaterThan(0)
     const msgs = await sessions.listMessages(run.sessionId)
     expect(msgs.map((m) => m.round)).toEqual(['independent', 'independent', 'independent', 'critique', 'critique', 'critique', 'judge'])
-    expect(msgs[0]).toMatchObject({ promptId: 'council-independent', promptVersion: 1, role: 'product-strategist' })
+    expect(msgs[0]).toMatchObject({ promptId: 'council-independent', promptVersion: 2, role: 'product-strategist' })
     // 7 calls × (1000 in × $1 + 500 out × $10) / 1M = $0.042
     expect(session.actualCost).toBeCloseTo(0.042)
   })

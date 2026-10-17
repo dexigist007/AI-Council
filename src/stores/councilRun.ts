@@ -1,8 +1,13 @@
 import { defineStore } from 'pinia'
-import { shallowRef } from 'vue'
+import { reactive, shallowRef } from 'vue'
 import { repos } from '@/db'
 import type { Round } from '@/db'
-import { runCouncil, type CouncilConfig, type CouncilReport, type CouncilTask } from '@/domain/council/engine'
+import { runCouncil, type CouncilConfig, type CouncilEvent, type CouncilReport, type CouncilTask } from '@/domain/council/engine'
+import { applyEvent, emptyFeed, feedMembers, type DebateFeed } from '@/domain/council/feed'
+import type { DiscoveryMeta } from '@/domain/discovery/followup'
+import type { DiscoveryReport } from '@/domain/discovery/report'
+import { buildDiscoveryTask, type DiscoveryInput } from '@/domain/discovery/task'
+import { roleBrief } from '@/domain/prompts/registry'
 import { councilDeps } from '@/domain/council/runtime'
 import { saveAuditFindings, type EvidenceSources } from '@/domain/audit/audit'
 import type { AuditReport } from '@/domain/audit/report'
@@ -11,7 +16,8 @@ import { buildIdeaTask, type IdeaMode } from '@/domain/ideas/task'
 import type { Idea, Project } from '@/db'
 
 export interface ActiveRun {
-  /** Exactly one of ideaId / projectId is set. */
+  kind: 'idea' | 'project' | 'discovery'
+  /** Set for idea / project runs; both null for discovery. */
   ideaId: string | null
   projectId: string | null
   sessionId: string | null
@@ -21,7 +27,10 @@ export interface ActiveRun {
   spentUsd: number
   unpriced: string[]
   error?: string
+  /** Live debate (reactive; mutated in place as events arrive). */
+  feed: DebateFeed
   report?: CouncilReport<IdeaReport>
+  discoveryReport?: CouncilReport<DiscoveryReport>
   auditReport?: CouncilReport<AuditReport>
   auditSaved?: { added: number; updated: number; unverified: number }
 }
@@ -38,13 +47,32 @@ export const useCouncilRun = defineStore('councilRun', () => {
     active.value = { ...active.value!, ...p }
   }
 
-  async function startIdea(idea: Idea, mode: IdeaMode, config: CouncilConfig) {
+  function begin(kind: ActiveRun['kind'], config: CouncilConfig, ids: { ideaId?: string; projectId?: string } = {}) {
     if (active.value?.status === 'running') throw new Error('Başka bir Council oturumu zaten çalışıyor.')
+    const all = [...config.participants, config.judge]
+    const members = Object.fromEntries(all.map((p) => [p.id, { status: 'waiting' as const, label: p.model }]))
+    const feed = reactive(emptyFeed(feedMembers(config.participants, config.judge, (id) => roleBrief(id).label)))
+    active.value = {
+      kind, ideaId: ids.ideaId ?? null, projectId: ids.projectId ?? null, sessionId: null, status: 'running', round: null,
+      members, spentUsd: 0, unpriced: [], feed,
+    }
+    controller = new AbortController()
+    return { signal: controller.signal, onEvent: (e: CouncilEvent) => onEvent(feed, e) }
+  }
+
+  function onEvent(feed: DebateFeed, e: CouncilEvent) {
+    applyEvent(feed, e)
+    if (e.type === 'round') patch({ round: e.round })
+    else if (e.type === 'cost') patch({ spentUsd: e.spentUsd, unpriced: e.unpriced })
+    else if (e.type === 'call') {
+      patch({ members: { ...active.value!.members, [e.participantId]: { ...active.value!.members[e.participantId], status: e.status, error: e.error } } })
+    }
+  }
+
+  async function startIdea(idea: Idea, mode: IdeaMode, config: CouncilConfig) {
     const task = buildIdeaTask(idea, mode)
     const r = await repos()
-    const members = Object.fromEntries([...config.participants, config.judge].map((p) => [p.id, { status: 'waiting' as const, label: p.model }]))
-    active.value = { ideaId: idea.id, projectId: null, sessionId: null, status: 'running', round: null, members, spentUsd: 0, unpriced: [] }
-    controller = new AbortController()
+    const opts = begin('idea', config, { ideaId: idea.id })
     await r.ideas.markEvaluating(idea.id)
 
     try {
@@ -52,14 +80,7 @@ export const useCouncilRun = defineStore('councilRun', () => {
         await councilDeps(),
         task,
         { ...config, meta: { ideaMode: mode, promptVersions: task.promptVersions } },
-        {
-          signal: controller.signal,
-          onEvent: (e) => {
-            if (e.type === 'round') patch({ round: e.round })
-            else if (e.type === 'cost') patch({ spentUsd: e.spentUsd, unpriced: e.unpriced })
-            else patch({ members: { ...active.value!.members, [e.participantId]: { ...active.value!.members[e.participantId], status: e.status, error: e.error } } })
-          },
-        },
+        opts,
       )
       patch({ sessionId: run.sessionId, status: run.status, error: run.error, report: run.report })
       // Without a report the idea goes back to draft; with one it waits for the user's verdict.
@@ -83,21 +104,28 @@ export const useCouncilRun = defineStore('councilRun', () => {
     sources: EvidenceSources,
     meta: Record<string, unknown>,
   ) {
-    if (active.value?.status === 'running') throw new Error('Başka bir Council oturumu zaten çalışıyor.')
-    const members = Object.fromEntries([...config.participants, config.judge].map((p) => [p.id, { status: 'waiting' as const, label: p.model }]))
-    active.value = { ideaId: null, projectId: project.id, sessionId: null, status: 'running', round: null, members, spentUsd: 0, unpriced: [] }
-    controller = new AbortController()
+    const opts = begin('project', config, { projectId: project.id })
     try {
-      const run = await runCouncil(await councilDeps(), task, { ...config, meta }, {
-        signal: controller.signal,
-        onEvent: (e) => {
-          if (e.type === 'round') patch({ round: e.round })
-          else if (e.type === 'cost') patch({ spentUsd: e.spentUsd, unpriced: e.unpriced })
-          else patch({ members: { ...active.value!.members, [e.participantId]: { ...active.value!.members[e.participantId], status: e.status, error: e.error } } })
-        },
-      })
+      const run = await runCouncil(await councilDeps(), task, { ...config, meta }, opts)
       const saved = run.report ? await saveAuditFindings((await repos()).findings, project.id, run.sessionId, run.report, sources) : undefined
       patch({ sessionId: run.sessionId, status: run.status, error: run.error, auditReport: run.report, auditSaved: saved })
+    } catch (e) {
+      patch({ status: 'failed', error: e instanceof Error ? e.message : String(e) })
+    } finally {
+      controller = null
+    }
+  }
+
+  /** Opportunity discovery: no idea yet, the council proposes and ranks candidates. */
+  async function startDiscovery(input: DiscoveryInput, config: CouncilConfig) {
+    const task = buildDiscoveryTask(input)
+    const opts = begin('discovery', config)
+    const meta: DiscoveryMeta & { promptVersions: Record<string, number> } = {
+      purpose: 'discovery', question: input.question, profile: input.profile, promptVersions: task.promptVersions,
+    }
+    try {
+      const run = await runCouncil(await councilDeps(), task, { ...config, meta: { ...meta, kinds: input.kinds } }, opts)
+      patch({ sessionId: run.sessionId, status: run.status, error: run.error, discoveryReport: run.report })
     } catch (e) {
       patch({ status: 'failed', error: e instanceof Error ? e.message : String(e) })
     } finally {
@@ -113,5 +141,5 @@ export const useCouncilRun = defineStore('councilRun', () => {
     if (active.value?.status !== 'running') active.value = null
   }
 
-  return { active, startIdea, startProjectCouncil, cancel, dismiss }
+  return { active, startIdea, startProjectCouncil, startDiscovery, cancel, dismiss }
 })
