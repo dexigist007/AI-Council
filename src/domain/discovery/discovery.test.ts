@@ -39,7 +39,10 @@ describe('discovery', () => {
   it('parses stored profiles defensively and stores them in settings', async () => {
     expect(parseProfile(null)).toEqual(EMPTY_PROFILE)
     expect(parseProfile({ skills: 'x', budget: 5 }).budget).toBe(EMPTY_PROFILE.budget)
-    expect(renderProfile(EMPTY_PROFILE)).toContain('Wanted time to first revenue: 1 ay')
+    expect(renderProfile(EMPTY_PROFILE)).toContain('Wanted time to first revenue: 1 month')
+    // Profiles saved with the old Turkish labels still load and render in English.
+    expect(parseProfile({ timeToRevenue: '3 ay' }).timeToRevenue).toBe('3m')
+    expect(renderProfile({ ...EMPTY_PROFILE, timeToRevenue: '2 hafta' })).toContain('Wanted time to first revenue: 2 weeks')
     const settings = settingsRepo(createTestDb())
     expect(await settings.get('k')).toBeNull()
     await settings.set('k', { skills: 'a' })

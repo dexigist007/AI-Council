@@ -2,43 +2,41 @@
   <q-dialog :model-value="modelValue" persistent @update:model-value="$emit('update:modelValue', $event)">
     <q-card style="width: 640px; max-width: 95vw">
       <q-card-section>
-        <div class="text-h6">Project Brain taslağı oluştur</div>
-        <div class="text-caption text-grey-7">
-          Tek bir AI çağrısı. Önerilen bilgiler "onay bekliyor" olarak gelir; sen onaylamadan Brain'in parçası olmaz.
-        </div>
+        <div class="text-h6">{{ t('projects.brainDraft.title') }}</div>
+        <div class="text-caption text-grey-7">{{ t('projects.brainDraft.intro') }}</div>
       </q-card-section>
 
-      <q-card-section v-if="loading" class="text-grey-7">Gönderilecek içerik hazırlanıyor…</q-card-section>
+      <q-card-section v-if="loading" class="text-grey-7">{{ t('projects.brainDraft.preparing') }}</q-card-section>
       <template v-else>
         <q-card-section class="q-pt-none">
           <q-banner v-if="slots.length === 0" rounded class="tone-warn">
-            Etkin ve modeli seçilmiş bir sağlayıcı yok (Settings).
+            {{ t('projects.brainDraft.noProvider') }}
           </q-banner>
-          <q-select v-else v-model="slotKey" dense outlined :options="slots.map((s) => ({ label: s.label, value: s.key }))" emit-value map-options label="Model" />
+          <q-select v-else v-model="slotKey" dense outlined :options="slots.map((s) => ({ label: s.label, value: s.key }))" emit-value map-options :label="t('projects.brainDraft.model')" />
         </q-card-section>
 
         <q-card-section v-if="context" class="q-pt-none">
-          <div class="text-subtitle2">AI'a gidecekler</div>
+          <div class="text-subtitle2">{{ t('projects.brainDraft.toAi') }}</div>
           <ul class="q-my-xs q-pl-md text-caption">
-            <li>Dosya ağacı (sadece yollar, {{ treeLines }} satır)</li>
-            <li>Tespit edilen teknoloji yığını</li>
+            <li>{{ t('projects.brainDraft.tree', { n: treeLines }) }}</li>
+            <li>{{ t('projects.brainDraft.stack') }}</li>
             <li v-for="f in context.files" :key="f"><code>{{ f }}</code></li>
           </ul>
           <div class="text-caption">
-            ~{{ (context.tokens / 1000).toFixed(1) }}k token giriş · tahmini maliyet <b>{{ costLabel }}</b>
+            {{ t('projects.brainDraft.tokens', { tokens: (context.tokens / 1000).toFixed(1) }) }} <b>{{ costLabel }}</b>
           </div>
           <div class="text-caption" :class="context.redactions ? 'text-warn' : 'text-grey-7'">
-            {{ context.redactions ? `${context.redactions} olası gizli bilgi maskelendi (********).` : 'Maskelenecek gizli bilgi bulunmadı.' }}
-            .env ve anahtar dosyaları hiçbir zaman okunmaz.
+            {{ context.redactions ? t('projects.brainDraft.redacted', { n: context.redactions }) : t('projects.brainDraft.nothingRedacted') }}
+            {{ t('projects.brainDraft.envNever') }}
           </div>
         </q-card-section>
         <q-card-section v-if="error" class="q-pt-none text-negative">{{ error }}</q-card-section>
       </template>
 
       <q-card-actions align="right">
-        <q-btn v-if="!running" v-close-popup flat label="Vazgeç" />
-        <q-btn v-else flat color="negative" label="Durdur" @click="controller?.abort()" />
-        <q-btn unelevated color="primary" label="Gönder ve taslak oluştur" :loading="running" :disable="!context || !slotKey" @click="send" />
+        <q-btn v-if="!running" v-close-popup flat :label="t('projects.shared.dismiss')" />
+        <q-btn v-else flat color="negative" :label="t('projects.shared.stop')" @click="controller?.abort()" />
+        <q-btn unelevated color="primary" :label="t('projects.brainDraft.send')" :loading="running" :disable="!context || !slotKey" @click="send" />
       </q-card-actions>
     </q-card>
   </q-dialog>
@@ -53,6 +51,7 @@ import { costOf, priceLookup, type PriceLookup } from '@/domain/cost/pricing'
 import { loadModelSlots, type ModelSlot } from '@/domain/providers/available'
 import { createProvider } from '@/domain/providers/registry'
 import { CancelledError } from '@/domain/providers/types'
+import { t } from '@/i18n'
 import { projectsFs, tauriTransport } from '@/platform/tauri'
 
 const props = defineProps<{ modelValue: boolean; project: Project }>()
@@ -73,7 +72,7 @@ const treeLines = computed(() => context.value?.tree.split('\n').length ?? 0)
 const costLabel = computed(() => {
   if (!context.value || !slot.value) return '—'
   const c = costOf(price.value(slot.value.provider, slot.value.model), { input: context.value.tokens, output: 3000, cached: 0 })
-  return c === null ? 'fiyatsız' : `~$${c.toFixed(3)}`
+  return c === null ? t('common.unpriced') : `~$${c.toFixed(3)}`
 })
 
 async function prepare() {
@@ -82,7 +81,7 @@ async function prepare() {
   try {
     const r = await repos()
     const [files, s, prices] = await Promise.all([r.projectIndex.listFiles(props.project.id), loadModelSlots(), r.modelPrices.list()])
-    if (files.length === 0) throw new Error('Proje henüz indekslenmedi.')
+    if (files.length === 0) throw new Error(t('projects.shared.notIndexed'))
     slots.value = s
     slotKey.value = s[0]?.key ?? null
     price.value = priceLookup(prices)
@@ -113,11 +112,11 @@ async function send() {
       error.value = res.error
       return
     }
-    const note = res.droppedEvidence.length ? ` Var olmayan ${res.droppedEvidence.length} dosya referansı atıldı.` : ''
-    emit('done', `${res.added} bilgi önerildi, onayını bekliyor.${note}`)
+    const note = res.droppedEvidence.length ? t('projects.brainDraft.dropped', { n: res.droppedEvidence.length }) : ''
+    emit('done', t('projects.brainDraft.done', { n: res.added, note }))
     emit('update:modelValue', false)
   } catch (e) {
-    error.value = e instanceof CancelledError ? 'Durduruldu.' : String(e instanceof Error ? e.message : e)
+    error.value = e instanceof CancelledError ? t('projects.shared.stopped') : String(e instanceof Error ? e.message : e)
   } finally {
     running.value = false
     controller = null

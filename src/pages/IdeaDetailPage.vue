@@ -1,6 +1,6 @@
 <template>
   <q-page padding>
-    <div v-if="!idea" class="text-grey-7">{{ notFound ? 'Fikir bulunamadı.' : 'Yükleniyor…' }}</div>
+    <div v-if="!idea" class="text-grey-7">{{ notFound ? t('ideas.detail.notFound') : t('common.loading') }}</div>
     <div v-else class="stack" style="max-width: 1000px">
       <div class="row items-start">
         <div class="col">
@@ -8,25 +8,25 @@
           <div class="text-soft q-mt-xs" style="white-space: pre-wrap">{{ idea.body }}</div>
         </div>
         <div class="col-auto q-gutter-sm">
-          <q-badge :color="idea.status === 'evaluating' ? 'orange' : 'primary'">{{ STATUS_LABEL[idea.status] }}</q-badge>
+          <q-badge :color="idea.status === 'evaluating' ? 'orange' : 'primary'">{{ statusLabel(idea.status) }}</q-badge>
           <q-btn v-if="canEdit" flat dense icon="edit" @click="editing = !editing" />
         </div>
       </div>
 
       <q-card v-if="editing" flat bordered>
         <q-card-section class="q-gutter-sm">
-          <q-input v-model="draftTitle" dense outlined label="Fikir" />
-          <q-input v-model="draftBody" outlined autogrow type="textarea" label="Ayrıntı" />
+          <q-input v-model="draftTitle" dense outlined :label="t('ideas.detail.idea')" />
+          <q-input v-model="draftBody" outlined autogrow type="textarea" :label="t('ideas.detail.detail')" />
         </q-card-section>
-        <q-card-actions align="right"><q-btn unelevated color="primary" label="Kaydet" @click="saveEdit" /></q-card-actions>
+        <q-card-actions align="right"><q-btn unelevated color="primary" :label="t('common.save')" @click="saveEdit" /></q-card-actions>
       </q-card>
 
       <SimilarIdeas :text="`${idea.title} ${idea.body}`" :ideas="others" :exclude-id="idea.id" />
 
       <q-banner v-if="parked" rounded class="tone-muted">
-        Bu fikir Graveyard'da ({{ STATUS_LABEL[idea.status] }}). Gerekçe: {{ idea.rejectReason ?? '—' }}
-        <span v-if="idea.revisitCondition"><br />Yeniden değerlendirme koşulu: {{ idea.revisitCondition }}</span>
-        <template #action><q-btn flat label="Yeniden aç" @click="reopen" /></template>
+        {{ t('ideas.detail.parked', { status: statusLabel(idea.status), reason: idea.rejectReason ?? t('common.none') }) }}
+        <span v-if="idea.revisitCondition"><br />{{ t('ideas.detail.revisit', { condition: idea.revisitCondition }) }}</span>
+        <template #action><q-btn flat :label="t('ideas.detail.reopen')" @click="reopen" /></template>
       </q-banner>
 
       <CouncilProgress v-if="runHere" :run="runHere" @cancel="store.cancel()" @dismiss="store.dismiss()" />
@@ -35,8 +35,8 @@
         <VerdictPanel v-if="idea.status === 'evaluating' && runHere?.status !== 'running'" :idea="idea" :report="latest.report.judge"
           :session-id="latest.sessionId" @decided="load" />
         <div class="text-caption text-grey-7">
-          {{ latest.type === 'kill_idea' ? 'KILL THIS IDEA' : 'Değerlendirme' }} · {{ new Date(latest.createdAt).toLocaleString() }} ·
-          <router-link :to="`/council/${latest.sessionId}`">oturum ayrıntısı</router-link>
+          {{ latest.type === 'kill_idea' ? t('ideas.detail.kill') : t('ideas.detail.evaluation') }} · {{ fmtDate(latest.createdAt) }} ·
+          <router-link :to="`/council/${latest.sessionId}`">{{ t('ideas.detail.sessionDetail') }}</router-link>
         </div>
         <IdeaReportView :report="latest.report.judge" :council="latest.report" />
       </template>
@@ -45,12 +45,12 @@
       <CouncilSetup v-if="!parked" v-show="runHere?.status !== 'running'" :idea="idea" :busy="store.active?.status === 'running'" @start="start" />
 
       <q-card v-if="sessions.length" flat bordered>
-        <q-card-section class="text-subtitle2">Oturum geçmişi</q-card-section>
+        <q-card-section class="text-subtitle2">{{ t('ideas.detail.history') }}</q-card-section>
         <q-list dense separator>
           <q-item v-for="s in sessions" :key="s.id" clickable :to="`/council/${s.id}`">
-            <q-item-section>{{ s.type === 'kill_idea' ? 'KILL' : 'Değerlendirme' }} · {{ s.mode.toUpperCase() }}</q-item-section>
-            <q-item-section side>{{ s.status }} · ${{ s.actualCost.toFixed(4) }}</q-item-section>
-            <q-item-section side>{{ new Date(s.createdAt).toLocaleString() }}</q-item-section>
+            <q-item-section>{{ s.type === 'kill_idea' ? t('ideas.detail.killShort') : t('ideas.detail.evaluation') }} · {{ s.mode.toUpperCase() }}</q-item-section>
+            <q-item-section side>{{ t(`common.status.${s.status}`) }} · ${{ s.actualCost.toFixed(4) }}</q-item-section>
+            <q-item-section side>{{ fmtDate(s.createdAt) }}</q-item-section>
           </q-item>
         </q-list>
       </q-card>
@@ -69,9 +69,10 @@ import VerdictPanel from '@/components/ideas/VerdictPanel.vue'
 import { repos, type Idea, type Session } from '@/db'
 import { GRAVEYARD_STATUSES } from '@/db/repositories/ideas'
 import type { CouncilConfig, CouncilReport } from '@/domain/council/engine'
-import { STATUS_LABEL } from '@/domain/ideas/labels'
+import { statusLabel } from '@/domain/ideas/labels'
 import type { IdeaReport } from '@/domain/ideas/report'
 import type { IdeaMode } from '@/domain/ideas/task'
+import { fmtDate, t } from '@/i18n'
 import { useCouncilRun } from '@/stores/councilRun'
 
 const route = useRoute()

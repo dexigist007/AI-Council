@@ -1,31 +1,31 @@
 <template>
   <q-page padding>
-    <div v-if="!session" class="text-grey-7">Yükleniyor…</div>
+    <div v-if="!session" class="text-grey-7">{{ t('common.loading') }}</div>
     <div v-else class="stack" style="max-width: 1100px">
       <div>
         <div class="text-h5">{{ sessionLabel(session) }} · {{ session.mode.toUpperCase() }}</div>
         <div class="text-caption text-grey-7">
-          {{ new Date(session.createdAt).toLocaleString() }} ·
-          <q-badge :color="STATUS_COLOR[session.status]">{{ session.status }}</q-badge> ·
-          tahmini {{ session.estCost === null ? 'fiyatsız' : `$${session.estCost.toFixed(4)}` }} · gerçekleşen ${{ session.actualCost.toFixed(4) }}
-          <span v-if="session.ideaId"> · <router-link :to="`/ideas/${session.ideaId}`">fikre git</router-link></span>
-          <span v-if="dMeta?.parentSessionId"> · <router-link :to="`/council/${dMeta.parentSessionId}`">önceki rapor</router-link></span>
+          {{ fmtDate(session.createdAt) }} ·
+          <q-badge :color="STATUS_COLOR[session.status]">{{ t(`common.status.${session.status}`) }}</q-badge> ·
+          {{ t('council.session.estimated') }} {{ session.estCost === null ? t('common.unpriced') : `$${session.estCost.toFixed(4)}` }} · {{ t('council.session.actual') }} ${{ session.actualCost.toFixed(4) }}
+          <span v-if="session.ideaId"> · <router-link :to="`/ideas/${session.ideaId}`">{{ t('council.session.goToIdea') }}</router-link></span>
+          <span v-if="dMeta?.parentSessionId"> · <router-link :to="`/council/${dMeta.parentSessionId}`">{{ t('council.session.previousReport') }}</router-link></span>
         </div>
         <div v-if="session.error" class="text-negative q-mt-sm">{{ session.error }}</div>
       </div>
 
       <q-card v-if="dMeta" flat bordered>
         <q-card-section>
-          <div class="text-caption text-soft">İstek</div>
+          <div class="text-caption text-soft">{{ t('council.session.request') }}</div>
           <div>{{ dMeta.question }}</div>
           <template v-if="dMeta.followup">
-            <div class="text-caption text-soft q-mt-sm">Devam sorusu</div>
+            <div class="text-caption text-soft q-mt-sm">{{ t('council.session.followup') }}</div>
             <div>{{ dMeta.followup }}</div>
           </template>
         </q-card-section>
       </q-card>
 
-      <q-expansion-item v-if="feed" v-model="feedOpen" icon="forum" :label="`Tartışma (${feed.claims.length} iddia, ${feed.reviews.reduce((n, r) => n + r.reviews.length, 0)} değerlendirme)`"
+      <q-expansion-item v-if="feed" v-model="feedOpen" icon="forum" :label="t('council.session.debate', { claims: feed.claims.length, reviews: feed.reviews.reduce((n, r) => n + r.reviews.length, 0) })"
         header-class="text-subtitle1" class="debate-box">
         <div class="q-pa-md"><DebateFeedView :feed="feed" judge-done /></div>
       </q-expansion-item>
@@ -34,19 +34,19 @@
         <DiscoveryReportView :report="discoveryReport" />
         <q-card flat bordered>
           <q-card-section>
-            <div class="text-subtitle2 q-mb-xs">Devam sorusu</div>
+            <div class="text-subtitle2 q-mb-xs">{{ t('council.session.followup') }}</div>
             <div class="text-caption text-soft q-mb-sm">
-              Judge raporu senin sorunla günceller (tek çağrı). Örn: "3 numarayı oyun yerine B2B SaaS olarak düşün" veya "bütçem $1000 olsaydı ne değişirdi?"
+              {{ t('council.session.followupHint') }}
             </div>
-            <q-input v-model="followup" outlined autogrow label="Sorun" :disable="asking" />
+            <q-input v-model="followup" outlined autogrow :label="t('council.session.yourQuestion')" :disable="asking" />
             <div class="row items-center q-mt-sm q-gutter-sm">
-              <q-btn unelevated color="primary" no-caps icon="send" label="Sor" :loading="asking" :disable="!followup.trim() || !followupModel" @click="ask" />
-              <span v-if="!followupModel" class="text-caption text-soft">Bu oturumun Judge modeli bulunamadı.</span>
+              <q-btn unelevated color="primary" no-caps icon="send" :label="t('council.session.ask')" :loading="asking" :disable="!followup.trim() || !followupModel" @click="ask" />
+              <span v-if="!followupModel" class="text-caption text-soft">{{ t('council.session.noJudgeModel') }}</span>
               <span v-else class="text-caption text-soft">{{ followupModel.provider }} · {{ followupModel.model }}</span>
               <span v-if="askError" class="text-negative text-caption">{{ askError }}</span>
             </div>
             <div v-if="asking && liveText" class="q-mt-sm text-caption text-soft">
-              yazıyor… {{ liveText.length.toLocaleString() }} karakter
+              {{ t('council.feed.typing', { count: fmtNum(liveText.length) }) }}
               <div v-for="(l, i) in liveFragments(liveText)" :key="i">{{ l }}</div>
             </div>
           </q-card-section>
@@ -57,17 +57,17 @@
       <AskAnswerView v-if="askReport" :report="askReport" />
       <q-card v-if="findingsReport" flat bordered>
         <q-card-section>
-          <div class="text-subtitle2">Özet</div>
+          <div class="text-subtitle2">{{ t('council.session.summary') }}</div>
           <div style="white-space: pre-wrap">{{ findingsReport.judge.summary }}</div>
           <div class="text-caption text-grey-7 q-mt-sm">
-            Judge {{ findingsReport.judge.findings.length }} bulgu üretti; doğrulanmış hâlleri projenin Findings sekmesinde.
-            <router-link v-if="session.projectId" :to="`/projects/${session.projectId}`">projeye git</router-link>
+            {{ t('council.session.findingsNote', { count: findingsReport.judge.findings.length }) }}
+            <router-link v-if="session.projectId" :to="`/projects/${session.projectId}`">{{ t('council.session.goToProject') }}</router-link>
           </div>
         </q-card-section>
       </q-card>
 
       <q-card flat bordered>
-        <q-card-section class="text-subtitle2">Model çağrıları ({{ messages.length }})</q-card-section>
+        <q-card-section class="text-subtitle2">{{ t('council.session.modelCalls', { count: messages.length }) }}</q-card-section>
         <q-list separator>
           <q-expansion-item v-for="m in messages" :key="m.id" dense>
             <template #header>
@@ -77,13 +77,13 @@
                 <q-item-label caption>{{ m.provider }}/{{ m.model }} · {{ m.promptId }}@v{{ m.promptVersion }}</q-item-label>
               </q-item-section>
               <q-item-section side class="text-caption">
-                {{ m.tokensIn }} in / {{ m.tokensOut }} out<span v-if="m.cachedTokens"> ({{ m.cachedTokens }} cache)</span> · ${{ m.cost.toFixed(4) }}
+                {{ m.tokensIn }} in / {{ m.tokensOut }} out<span v-if="m.cachedTokens"> {{ t('council.session.cache', { count: m.cachedTokens }) }}</span> · ${{ m.cost.toFixed(4) }}
                 · {{ ((m.latencyMs ?? 0) / 1000).toFixed(1) }}s
               </q-item-section>
             </template>
             <q-card flat class="q-pa-md tone-muted">
               <div v-if="m.error" class="text-negative q-mb-sm">{{ m.error }}</div>
-              <pre class="q-ma-none text-caption" style="white-space: pre-wrap; max-height: 400px; overflow: auto">{{ m.responseText ?? '(yanıt yok)' }}</pre>
+              <pre class="q-ma-none text-caption" style="white-space: pre-wrap; max-height: 400px; overflow: auto">{{ m.responseText ?? t('council.session.noResponse') }}</pre>
             </q-card>
           </q-expansion-item>
         </q-list>
@@ -108,6 +108,7 @@ import AskAnswerView from '@/components/projects/AskAnswerView.vue'
 import type { AskReport } from '@/domain/ask/ask'
 import type { AuditReport } from '@/domain/audit/report'
 import { repos, type Session, type SessionMessage } from '@/db'
+import { fmtDate, fmtNum, t } from '@/i18n'
 import type { CouncilConfig, CouncilReport } from '@/domain/council/engine'
 import type { IdeaReport } from '@/domain/ideas/report'
 import { STATUS_COLOR, sessionLabel } from './sessionLabels'

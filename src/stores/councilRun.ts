@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { reactive, shallowRef } from 'vue'
 import { repos } from '@/db'
+import { t } from '@/i18n'
 import type { Round } from '@/db'
 import { runCouncil, type CouncilConfig, type CouncilEvent, type CouncilReport, type CouncilTask } from '@/domain/council/engine'
 import { applyEvent, emptyFeed, feedMembers, type DebateFeed } from '@/domain/council/feed'
@@ -48,7 +49,7 @@ export const useCouncilRun = defineStore('councilRun', () => {
   }
 
   function begin(kind: ActiveRun['kind'], config: CouncilConfig, ids: { ideaId?: string; projectId?: string } = {}) {
-    if (active.value?.status === 'running') throw new Error('Başka bir Council oturumu zaten çalışıyor.')
+    if (active.value?.status === 'running') throw new Error(t('council.errors.alreadyRunning'))
     const all = [...config.participants, config.judge]
     const members = Object.fromEntries(all.map((p) => [p.id, { status: 'waiting' as const, label: p.model }]))
     const feed = reactive(emptyFeed(feedMembers(config.participants, config.judge, (id) => roleBrief(id).label)))

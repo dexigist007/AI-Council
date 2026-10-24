@@ -1,35 +1,35 @@
 <template>
   <div class="stack">
     <q-banner v-if="error" rounded :class="notRepo ? 'tone-muted' : 'tone-danger'">
-      {{ notRepo ? 'Bu klasör bir git deposu değil.' : error }}
+      {{ notRepo ? t('projects.git.notRepo') : error }}
     </q-banner>
 
     <template v-if="status">
       <q-card flat bordered>
         <q-card-section class="row items-center q-gutter-md">
-          <div><q-icon name="call_split" /> <b>{{ status.branch ?? '(detached HEAD)' }}</b>
+          <div><q-icon name="call_split" /> <b>{{ status.branch ?? t('projects.git.detached') }}</b>
             <span v-if="status.upstream" class="text-caption text-grey-7"> → {{ status.upstream }}
-              <span v-if="status.ahead">· {{ status.ahead }} ileride</span><span v-if="status.behind"> · {{ status.behind }} geride</span></span>
+              <span v-if="status.ahead">{{ t('projects.git.ahead', { n: status.ahead }) }}</span><span v-if="status.behind">{{ t('projects.git.behind', { n: status.behind }) }}</span></span>
           </div>
-          <div v-if="commits[0]" class="text-caption text-soft">Son commit: <code>{{ commits[0].hash.slice(0, 8) }}</code> {{ commits[0].subject }}</div>
+          <div v-if="commits[0]" class="text-caption text-soft">{{ t('projects.git.lastCommit') }} <code>{{ commits[0].hash.slice(0, 8) }}</code> {{ commits[0].subject }}</div>
           <q-space />
           <q-btn flat dense icon="refresh" @click="load" />
         </q-card-section>
         <q-card-section class="q-pt-none">
-          <div class="text-caption text-grey-7">Commit edilmemiş dosyalar ({{ status.files.length }})</div>
-          <div v-if="status.files.length === 0" class="text-grey-7">Çalışma alanı temiz.</div>
+          <div class="text-caption text-grey-7">{{ t('projects.git.uncommitted', { n: status.files.length }) }}</div>
+          <div v-if="status.files.length === 0" class="text-grey-7">{{ t('projects.git.clean') }}</div>
           <div v-for="f in status.files" :key="f.path" class="mono text-caption">
             <span class="code">{{ f.index }}{{ f.worktree }}</span> {{ f.path }}
           </div>
           <div v-if="status.files.some((f) => f.index === '?')" class="text-caption text-grey-7 q-mt-xs">
-            "??" yeni (takip edilmeyen) dosyalar git diff'te görünmez; incelemeye girmeleri için önce <code>git add</code> edilmeleri gerekir.
+            {{ t('projects.git.untrackedPre') }} <code>git add</code> {{ t('projects.git.untrackedPost') }}
           </div>
         </q-card-section>
       </q-card>
 
       <q-card flat bordered>
         <q-card-section class="row items-center q-col-gutter-sm">
-          <q-select v-model="target" class="col-8" dense outlined emit-value map-options :options="targetOptions" label="İncelenecek değişiklik" @update:model-value="loadDiff" />
+          <q-select v-model="target" class="col-8" dense outlined emit-value map-options :options="targetOptions" :label="t('projects.git.target')" @update:model-value="loadDiff" />
           <div class="col text-caption text-grey-7">{{ diffSummary }}</div>
         </q-card-section>
         <q-list v-if="diffFiles.length" dense separator>
@@ -40,28 +40,28 @@
                 <span><q-badge outline>{{ f.status }}</q-badge> <span class="text-positive">+{{ f.additions }}</span> <span class="text-negative">-{{ f.deletions }}</span></span>
               </q-item-section>
             </template>
-            <div v-if="f.binary" class="q-pa-sm text-grey-7">Binary dosya.</div>
+            <div v-if="f.binary" class="q-pa-sm text-grey-7">{{ t('projects.git.binary') }}</div>
             <pre v-else class="diff"><template v-for="(h, hi) in f.hunks" :key="hi"><span class="hunk">@@ {{ h.newStart }} @@
 </span><span v-for="(l, li) in h.lines" :key="li" :class="l.type === '+' ? 'add' : l.type === '-' ? 'del' : ''">{{ l.type }}{{ l.newLine === null ? '     ' : String(l.newLine).padStart(5) }} {{ l.text }}
 </span></template></pre>
           </q-expansion-item>
         </q-list>
-        <q-card-section v-else-if="target" class="text-grey-7">Bu seçimde değişiklik yok.</q-card-section>
+        <q-card-section v-else-if="target" class="text-grey-7">{{ t('projects.git.noChanges') }}</q-card-section>
       </q-card>
 
       <q-card v-show="runHere?.status !== 'running'" flat bordered>
-        <q-card-section class="text-subtitle2">Review Changes</q-card-section>
+        <q-card-section class="text-subtitle2">{{ t('projects.git.reviewTitle') }}</q-card-section>
         <q-card-section class="q-pt-none stack">
-          <div class="text-caption text-grey-7">Sadece değişen satırlar ve çevrelerindeki birkaç satır gönderilir. Regresyon, hata, eksik doğrulama, güvenlik, tekrar eden mantık ve performans aranır; bulgular Findings'e kanıt doğrulamasıyla düşer.</div>
+          <div class="text-caption text-grey-7">{{ t('projects.git.reviewHint') }}</div>
           <CouncilMembers v-model="config" :roles="REVIEW_ROLES" />
           <div v-if="review" class="text-caption">
-            Gönderilecek: {{ review.files.length }} dosya · ~{{ (review.tokens / 1000).toFixed(1) }}k token (her üyeye) · tahmini toplam <b>{{ estimateLabel }}</b> ·
-            <span :class="review.redactions ? 'text-warn' : ''">{{ review.redactions }} maskeleme</span>
-            <div v-if="review.skipped.length" class="text-grey-7">Dahil edilmeyen: {{ review.skipped.map((s) => `${s.path} (${SKIP_LABEL[s.reason] ?? s.reason})`).join(', ') }}</div>
+            {{ t('projects.git.toSend', { n: review.files.length }) }} · {{ t('projects.shared.perMember', { tokens: (review.tokens / 1000).toFixed(1) }) }} · {{ t('projects.shared.estimatedTotal') }} <b>{{ estimateLabel }}</b> ·
+            <span :class="review.redactions ? 'text-warn' : ''">{{ t('projects.shared.redactions', { n: review.redactions }) }}</span>
+            <div v-if="review.skipped.length" class="text-grey-7">{{ t('projects.git.excluded', { list: review.skipped.map((s) => `${s.path} (${skipLabel(s.reason)})`).join(', ') }) }}</div>
           </div>
         </q-card-section>
         <q-card-actions class="q-px-md q-pb-md">
-          <q-btn unelevated color="primary" icon="rate_review" label="Değişiklikleri incele" :disable="!!disabledReason" @click="startReview" />
+          <q-btn unelevated color="primary" icon="rate_review" :label="t('projects.git.review')" :disable="!!disabledReason" @click="startReview" />
           <span v-if="disabledReason" class="text-caption text-grey-7 q-ml-md">{{ disabledReason }}</span>
         </q-card-actions>
       </q-card>
@@ -69,12 +69,12 @@
       <CouncilProgress v-if="runHere" :run="runHere" @cancel="store.cancel()" @dismiss="store.dismiss()" />
       <q-card v-if="runHere?.auditSaved" flat bordered>
         <q-card-section>
-          <div class="text-subtitle2">İnceleme tamamlandı</div>
-          <div>{{ runHere.auditSaved.added }} yeni bulgu, {{ runHere.auditSaved.updated }} güncellendi.
-            <span v-if="runHere.auditSaved.unverified" class="text-negative">{{ runHere.auditSaved.unverified }} bulgunun kanıtı diff'te bulunamadı (UNVERIFIED).</span></div>
+          <div class="text-subtitle2">{{ t('projects.git.done') }}</div>
+          <div>{{ t('projects.git.saved', { added: runHere.auditSaved.added, updated: runHere.auditSaved.updated }) }}
+            <span v-if="runHere.auditSaved.unverified" class="text-negative">{{ t('projects.git.unverified', { n: runHere.auditSaved.unverified }) }}</span></div>
           <div v-if="runHere.auditReport" class="q-mt-sm" style="white-space: pre-wrap">{{ runHere.auditReport.judge.summary }}</div>
         </q-card-section>
-        <q-card-actions><q-btn flat color="primary" label="Bulgulara git" @click="$emit('show-findings')" /></q-card-actions>
+        <q-card-actions><q-btn flat color="primary" :label="t('projects.shared.goToFindings')" @click="$emit('show-findings')" /></q-card-actions>
       </q-card>
     </template>
   </div>
@@ -90,12 +90,17 @@ import { estimateCouncil, type CouncilConfig } from '@/domain/council/engine'
 import { parseDiff, parseLog, parseStatus, type DiffFile, type GitCommit, type GitStatus } from '@/domain/git/parse'
 import { buildReviewContext, buildReviewTask, REVIEW_ROLES } from '@/domain/git/review'
 import { gitRun } from '@/platform/tauri'
+import { fmtDay, t, type MessageKey } from '@/i18n'
 import { useCouncilRun } from '@/stores/councilRun'
 
 const props = defineProps<{ project: Project }>()
 const emit = defineEmits<{ 'show-findings': []; changed: [] }>()
 const store = useCouncilRun()
-const SKIP_LABEL: Record<string, string> = { binary: 'binary', deleted: 'silindi', budget: 'boyut sınırı', 'lock/generated/sensitive': 'lock/üretilmiş/hassas' }
+const SKIP_KEY: Record<string, MessageKey> = {
+  binary: 'projects.git.skip.binary', deleted: 'projects.git.skip.deleted', budget: 'projects.git.skip.budget',
+  'lock/generated/sensitive': 'projects.git.skip.lockGenerated',
+}
+const skipLabel = (reason: string) => (SKIP_KEY[reason] ? t(SKIP_KEY[reason]) : reason)
 
 const status = ref<GitStatus | null>(null)
 const commits = ref<GitCommit[]>([])
@@ -110,23 +115,28 @@ const config = ref<CouncilConfig | null>(null)
 const notRepo = computed(() => error.value === 'not a git repository')
 const runHere = computed(() => (store.active?.projectId === props.project.id ? store.active : null))
 const targetOptions = computed(() => [
-  { label: 'Commit edilmemiş değişiklikler (HEAD\'e göre)', value: 'working' },
-  ...commits.value.map((c) => ({ label: `${c.hash.slice(0, 8)} · ${c.subject} · ${c.author} · ${new Date(c.date).toLocaleDateString()}`, value: c.hash })),
+  { label: t('projects.git.working'), value: 'working' },
+  ...commits.value.map((c) => ({ label: `${c.hash.slice(0, 8)} · ${c.subject} · ${c.author} · ${fmtDay(c.date)}`, value: c.hash })),
 ])
-const targetLabel = computed(() => targetOptions.value.find((o) => o.value === target.value)?.label ?? target.value)
+/** What the review prompt calls the target; it goes to the models, so it does not follow the UI language. */
+const targetLabel = computed(() => {
+  if (target.value === 'working') return 'Commit edilmemiş değişiklikler (HEAD\'e göre)'
+  const c = commits.value.find((x) => x.hash === target.value)
+  return c ? `${c.hash.slice(0, 8)} · ${c.subject} · ${c.author} · ${new Date(c.date).toLocaleDateString()}` : target.value
+})
 const review = computed(() => (diffFiles.value.length ? buildReviewContext(diffFiles.value, facts.value) : null))
 const diffSummary = computed(() => {
   const add = diffFiles.value.reduce((s, f) => s + f.additions, 0)
   const del = diffFiles.value.reduce((s, f) => s + f.deletions, 0)
-  return `${diffFiles.value.length} dosya · +${add} -${del}${truncated.value ? ' · (çıktı kesildi)' : ''}`
+  return t('projects.git.summary', { n: diffFiles.value.length, add, del }) + (truncated.value ? t('projects.git.truncated') : '')
 })
 const estimate = computed(() => (review.value && config.value ? estimateCouncil(buildReviewTask(props.project, targetLabel.value, review.value), config.value, price.value) : null))
-const estimateLabel = computed(() => (!estimate.value ? '—' : estimate.value.usd === null ? 'fiyatsız' : `~$${estimate.value.usd.toFixed(3)}`))
+const estimateLabel = computed(() => (!estimate.value ? '—' : estimate.value.usd === null ? t('common.unpriced') : `~$${estimate.value.usd.toFixed(3)}`))
 const disabledReason = computed(() => {
-  if (store.active?.status === 'running') return 'Başka bir oturum çalışıyor.'
-  if (!review.value || review.value.files.length === 0) return 'İncelenecek değişiklik yok.'
-  if (!config.value) return 'En az 2 üye ve bir Judge gerekli.'
-  if (estimate.value?.usd != null && config.value.budgetUsd !== undefined && estimate.value.usd > config.value.budgetUsd) return 'Tahmini maliyet bütçeyi aşıyor.'
+  if (store.active?.status === 'running') return t('projects.shared.otherSessionRunning')
+  if (!review.value || review.value.files.length === 0) return t('projects.git.nothingToReview')
+  if (!config.value) return t('projects.shared.needMembers')
+  if (estimate.value?.usd != null && config.value.budgetUsd !== undefined && estimate.value.usd > config.value.budgetUsd) return t('projects.shared.overBudget')
   return ''
 })
 

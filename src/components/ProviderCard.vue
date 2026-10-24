@@ -1,60 +1,58 @@
 <template>
   <q-card flat bordered>
     <q-card-section class="row items-center q-gutter-sm">
-      <div class="text-subtitle1">{{ meta.label }}</div>
-      <q-badge v-if="meta.note" color="orange-8" :label="meta.note" />
+      <div class="text-subtitle1">{{ meta.label }}<span v-if="meta.keyless" class="text-soft"> ({{ t('shell.provider.local') }})</span></div>
+      <q-badge v-if="meta.note" color="orange-8" :label="t(`shell.provider.note.${meta.note}`)" />
       <q-space />
-      <q-chip v-if="meta.keyless" dense color="positive" text-color="white" icon="computer">Anahtar gerekmez</q-chip>
+      <q-chip v-if="meta.keyless" dense color="positive" text-color="white" icon="computer">{{ t('shell.provider.noKeyNeeded') }}</q-chip>
       <q-chip v-else dense :color="hasKey ? 'positive' : 'grey-5'" text-color="white" :icon="hasKey ? 'key' : 'key_off'">
-        {{ hasKey ? 'Anahtar kayıtlı' : 'Anahtar yok' }}
+        {{ hasKey ? t('shell.provider.keySaved') : t('shell.provider.noKey') }}
       </q-chip>
-      <q-toggle v-model="config.enabled" label="Etkin" :disable="!hasKey" @update:model-value="save" />
+      <q-toggle v-model="config.enabled" :label="t('shell.provider.enabled')" :disable="!hasKey" @update:model-value="save" />
     </q-card-section>
     <q-card-section v-if="missing" class="q-py-none">
-      <q-banner dense rounded class="tone-warn">Council'da kullanılamaz: {{ missing }}</q-banner>
+      <q-banner dense rounded class="tone-warn">{{ t('shell.provider.unusable', { reasons: missing }) }}</q-banner>
     </q-card-section>
 
     <q-card-section class="q-pt-none q-gutter-y-sm">
-      <div v-if="meta.keyless" class="text-caption text-grey-7">
-        Sunucuyu bu bilgisayarda çalıştır ({{ meta.keyUrl }}), bir model indir (ör. <code>ollama pull qwen2.5:7b</code>),
-        sonra modelleri yenile.
+      <div v-if="meta.keyless" class="text-caption text-soft">
+        {{ t('shell.provider.localHint', { url: meta.keyUrl, cmd: 'ollama pull qwen2.5:7b' }) }}
       </div>
       <div v-else class="row q-col-gutter-sm items-center">
         <q-input
           v-model="keyInput" class="col" dense outlined type="password" autocomplete="off" bottom-slots
-          :label="hasKey ? 'Yeni anahtar (değiştirmek için)' : 'API anahtarı'"
+          :label="hasKey ? t('shell.provider.newKey') : t('shell.provider.apiKey')"
         >
           <template #hint>
-            Anahtar işletim sisteminin anahtar deposunda saklanır, uygulama arayüzü onu bir daha okuyamaz.
-            Anahtar: {{ meta.keyUrl }}
+            {{ t('shell.provider.keyHint', { url: meta.keyUrl }) }}
           </template>
         </q-input>
         <div class="col-auto q-gutter-x-sm">
-          <q-btn unelevated color="primary" label="Kaydet" :disable="!keyInput.trim()" :loading="busy === 'key'" @click="saveKey" />
-          <q-btn v-if="hasKey" flat color="negative" label="Sil" :loading="busy === 'delete'" @click="deleteKey" />
+          <q-btn unelevated color="primary" :label="t('common.save')" :disable="!keyInput.trim()" :loading="busy === 'key'" @click="saveKey" />
+          <q-btn v-if="hasKey" flat color="negative" :label="t('common.delete')" :loading="busy === 'delete'" @click="deleteKey" />
         </div>
       </div>
 
       <div class="row q-col-gutter-sm q-mt-md">
         <q-select
-          v-model="config.defaultModel" class="col-12 col-md-6" dense outlined label="Varsayılan model"
+          v-model="config.defaultModel" class="col-12 col-md-6" dense outlined :label="t('shell.provider.defaultModel')"
           :options="models" use-input fill-input hide-selected input-debounce="0" new-value-mode="add-unique"
           @input-value="(v: string) => (config.defaultModel = v)" @update:model-value="save" @blur="save"
         >
           <template #after>
             <q-btn flat dense icon="refresh" :disable="!hasKey" :loading="busy === 'models'" @click="loadModels">
-              <q-tooltip>Modelleri sağlayıcıdan getir</q-tooltip>
+              <q-tooltip>{{ t('shell.provider.fetchModels') }}</q-tooltip>
             </q-btn>
           </template>
         </q-select>
         <q-input
           v-model.number="config.maxTokens" class="col-6 col-md-3" dense outlined type="number" label="Max tokens"
-          placeholder="varsayılan" @change="save"
+          :placeholder="t('shell.provider.defaultPlaceholder')" @change="save"
         />
         <q-input
           v-model.number="temperature" class="col-6 col-md-3" dense outlined type="number" step="0.1" min="0" max="2"
-          label="Temperature" placeholder="varsayılan" :disable="meta.id === 'anthropic'"
-          :hint="meta.id === 'anthropic' ? 'Güncel Claude modelleri desteklemiyor' : 'Boş = model varsayılanı'"
+          label="Temperature" :placeholder="t('shell.provider.defaultPlaceholder')" :disable="meta.id === 'anthropic'"
+          :hint="meta.id === 'anthropic' ? t('shell.provider.noTemperature') : t('shell.provider.emptyIsDefault')"
           @change="save"
         />
       </div>
@@ -62,7 +60,7 @@
 
     <q-card-actions class="q-px-md q-pb-md">
       <q-btn
-        outline color="primary" icon="bolt" label="Bağlantıyı test et" :loading="busy === 'test'"
+        outline color="primary" icon="bolt" :label="t('shell.provider.test')" :loading="busy === 'test'"
         :disable="!hasKey || !config.defaultModel" @click="test"
       />
       <div v-if="status" class="q-ml-md" :class="status.ok ? 'text-positive' : 'text-negative'">{{ status.text }}</div>
@@ -77,6 +75,7 @@ import type { ProviderConfig } from '@/db'
 import { secrets, tauriTransport } from '@/platform/tauri'
 import { createProvider, type ProviderMeta } from '@/domain/providers/registry'
 import { ProviderError } from '@/domain/providers/types'
+import { t } from '@/i18n'
 
 const props = defineProps<{ meta: ProviderMeta; initial: ProviderConfig }>()
 
@@ -95,16 +94,16 @@ const temperature = computed({
 
 const missing = computed(() => {
   const m: string[] = []
-  if (!hasKey.value) m.push('API anahtarı kaydet')
-  if (!config.value.enabled) m.push('"Etkin"i aç')
-  if (!config.value.defaultModel?.trim()) m.push('varsayılan model seç (↻ ile listeyi getir, listeden tıkla)')
+  if (!hasKey.value) m.push(t('shell.provider.missingKey'))
+  if (!config.value.enabled) m.push(t('shell.provider.missingEnabled'))
+  if (!config.value.defaultModel?.trim()) m.push(t('shell.provider.missingModel'))
   return m.join(' · ')
 })
 
 const provider = () => createProvider(props.meta.id, tauriTransport)
 function fail(e: unknown) {
   const text = e instanceof ProviderError && e.kind === 'auth'
-    ? `Anahtar geçersiz veya yetkisiz (${e.message})`
+    ? t('shell.provider.invalidKey', { error: e.message })
     : String(e instanceof Error ? e.message : e)
   status.value = { ok: false, text }
 }
@@ -130,7 +129,7 @@ const saveKey = () => run('key', async () => {
   await secrets.set(props.meta.id, keyInput.value)
   keyInput.value = ''
   hasKey.value = true
-  status.value = { ok: true, text: 'Anahtar kaydedildi.' }
+  status.value = { ok: true, text: t('shell.provider.keyStored') }
 })
 
 const deleteKey = () => run('delete', async () => {
@@ -138,12 +137,12 @@ const deleteKey = () => run('delete', async () => {
   hasKey.value = false
   config.value.enabled = false
   await save()
-  status.value = { ok: true, text: 'Anahtar silindi.' }
+  status.value = { ok: true, text: t('shell.provider.keyDeleted') }
 })
 
 const loadModels = () => run('models', async () => {
   models.value = await provider().listModels()
-  status.value = { ok: true, text: `${models.value.length} model bulundu.` }
+  status.value = { ok: true, text: t('shell.provider.modelsFound', { n: models.value.length }) }
 })
 
 const test = () => run('test', async () => {
@@ -156,7 +155,7 @@ const test = () => run('test', async () => {
   const ms = Math.round(performance.now() - started)
   status.value = {
     ok: true,
-    text: `Yanıt: "${res.text.trim().slice(0, 40)}" · ${ms} ms · ${res.usage.input} giriş / ${res.usage.output} çıkış token`,
+    text: t('shell.provider.testOk', { text: res.text.trim().slice(0, 40), ms, input: res.usage.input, output: res.usage.output }),
   }
 })
 

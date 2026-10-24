@@ -1,3 +1,4 @@
+import { modelLanguage } from '@/i18n'
 import type { z } from 'zod'
 import type { sessionsRepo, Round, SessionType } from '@/db/repositories/sessions'
 import { costOf, estimateTokens, type PriceLookup } from '@/domain/cost/pricing'
@@ -96,7 +97,7 @@ const JUDGE_MAX_TOKENS = 16000
 const EXPECTED_OUTPUT: Record<'independent' | 'critique' | 'judge', number> = { independent: 2000, critique: 1500, judge: 4000 }
 const CLAIM_TOKENS = 60
 
-const language = (c: CouncilConfig) => c.outputLanguage ?? 'Turkish'
+const language = (c: CouncilConfig) => c.outputLanguage ?? modelLanguage()
 
 function memberVars(p: Participant, task: CouncilTask<unknown>, config: CouncilConfig) {
   const role = roleBrief(p.roleId)

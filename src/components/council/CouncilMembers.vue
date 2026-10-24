@@ -1,23 +1,24 @@
 <template>
   <div class="stack">
-    <q-banner v-if="slots.length === 0" rounded class="tone-warn">Etkin ve modeli seçilmiş bir sağlayıcı yok (Settings).</q-banner>
+    <q-banner v-if="slots.length === 0" rounded class="tone-warn">{{ t('council.members.noProvider') }}</q-banner>
     <template v-else>
       <div class="row q-col-gutter-sm items-center">
         <q-btn-toggle v-model="mode" class="col-auto" no-caps unelevated toggle-color="secondary"
-          :options="[{ label: 'FAST', value: 'fast' }, { label: 'BALANCED', value: 'balanced' }]" />
-        <q-input v-model.number="budget" class="col-3" dense outlined type="number" step="0.5" label="Bütçe (USD)" />
+          :options="[{ label: t('council.mode.fast'), value: 'fast' }, { label: t('council.mode.balanced'), value: 'balanced' }]" />
+        <q-input v-model.number="budget" class="col-3" dense outlined type="number" step="0.5" :label="t('council.configurator.budget')" />
       </div>
       <div v-for="(m, i) in members" :key="i" class="row q-col-gutter-sm items-center">
-        <q-select v-model="m.slot" class="col-6" dense outlined :options="slotOptions" emit-value map-options label="Model" />
-        <q-select v-model="m.roleId" class="col" dense outlined :options="roleOptions" emit-value map-options label="Rol" />
+        <q-select v-model="m.slot" class="col-6" dense outlined :options="slotOptions" emit-value map-options :label="t('council.configurator.model')" />
+        <q-select v-model="m.roleId" class="col" dense outlined :options="roleOptions" emit-value map-options :label="t('council.configurator.role')" />
       </div>
-      <q-select v-model="judgeSlot" dense outlined :options="slotOptions" emit-value map-options label="Judge" style="max-width: 50%" />
+      <q-select v-model="judgeSlot" dense outlined :options="slotOptions" emit-value map-options :label="t('council.configurator.judge')" style="max-width: 50%" />
     </template>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
+import { t } from '@/i18n'
 import type { CouncilConfig, CouncilMode, Participant } from '@/domain/council/engine'
 import { roleBrief, roleIds } from '@/domain/prompts/registry'
 import { loadModelSlots, type ModelSlot } from '@/domain/providers/available'

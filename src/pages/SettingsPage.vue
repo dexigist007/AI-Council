@@ -1,10 +1,17 @@
 <template>
   <q-page padding>
-    <div class="text-h5 q-mb-xs">AI sağlayıcıları</div>
-    <div class="text-grey-7 q-mb-lg">
-      Anahtarlar macOS Keychain / Windows Credential Manager'da tutulur. İstekler doğrudan sağlayıcıya gider,
-      arada sunucu yoktur.
-      <div class="text-caption q-mt-xs">Sürüm: {{ buildId }}</div>
+    <div class="row items-end q-col-gutter-md q-mb-lg" style="max-width: 900px">
+      <div class="col">
+        <div class="text-h5 q-mb-xs">{{ t('shell.settings.providers') }}</div>
+        <div class="text-soft">{{ t('shell.settings.providersHint') }}</div>
+        <div class="text-caption q-mt-xs">{{ t('shell.settings.version', { id: buildId }) }}</div>
+      </div>
+      <div class="col-12 col-sm-4">
+        <q-select
+          :model-value="locale" dense outlined :label="t('shell.settings.language')" :hint="t('shell.settings.languageHint')"
+          :options="LOCALES.map((l) => ({ label: l.label, value: l.id }))" emit-value map-options @update:model-value="setLocale"
+        />
+      </div>
     </div>
     <q-banner v-if="error" class="bg-negative text-white q-mb-md" rounded>{{ error }}</q-banner>
     <div v-if="configs" class="stack" style="max-width: 900px">
@@ -17,6 +24,8 @@
 <script setup lang="ts">
 const buildId = __BUILD__
 import { onMounted, ref } from 'vue'
+import { LOCALES, locale, t } from '@/i18n'
+import { setLocale } from '@/i18n/setup'
 import ModelPricesCard from '@/components/ModelPricesCard.vue'
 import ProviderCard from '@/components/ProviderCard.vue'
 import { repos, type ProviderConfig } from '@/db'

@@ -2,22 +2,22 @@
   <div class="stack">
     <q-card flat bordered>
       <q-card-section class="stack">
-        <q-input v-model="question" outlined autogrow type="textarea" label="Projeye sor"
-          placeholder="Örn: Playlist yüklenirken RAM neden artıyor? · Firebase nerelerde kullanılıyor?" />
+        <q-input v-model="question" outlined autogrow type="textarea" :label="t('projects.ask.question')"
+          :placeholder="t('projects.ask.questionPlaceholder')" />
         <div class="row q-col-gutter-sm items-center">
-          <q-input v-model="terms" class="col" dense outlined label="Yerel arama terimleri"
-            hint="Kodda geçen kelimeler daha iyi sonuç verir (İngilizce isimler, fonksiyon adları). AI kullanılmaz." @keyup.enter="find" />
-          <div class="col-auto"><q-btn unelevated color="primary" icon="search" label="Kod parçalarını bul" :disable="!terms.trim()" :loading="finding" @click="find" /></div>
+          <q-input v-model="terms" class="col" dense outlined :label="t('projects.ask.terms')"
+            :hint="t('projects.ask.termsHint')" @keyup.enter="find" />
+          <div class="col-auto"><q-btn unelevated color="primary" icon="search" :label="t('projects.ask.find')" :disable="!terms.trim()" :loading="finding" @click="find" /></div>
         </div>
       </q-card-section>
     </q-card>
 
     <q-card v-if="chunks.length" flat bordered>
       <q-card-section class="row items-center">
-        <div class="text-subtitle2">AI'a gidecek kod parçaları ({{ selected.size }}/{{ chunks.length }})</div>
+        <div class="text-subtitle2">{{ t('projects.ask.chunks', { selected: selected.size, total: chunks.length }) }}</div>
         <q-space />
-        <q-btn flat dense no-caps label="İlk 12" @click="selectTop" />
-        <q-btn flat dense no-caps label="Hiçbiri" @click="selected = new Set()" />
+        <q-btn flat dense no-caps :label="t('projects.ask.top12')" @click="selectTop" />
+        <q-btn flat dense no-caps :label="t('projects.ask.none')" @click="selected = new Set()" />
       </q-card-section>
       <q-list dense separator style="max-height: 320px; overflow: auto">
         <q-item v-for="c in chunks" :key="c.id" tag="label">
@@ -26,32 +26,32 @@
             <q-item-label>{{ c.path }}:{{ c.startLine }}-{{ c.endLine }}</q-item-label>
             <q-item-label caption lines="1" class="mono">{{ firstLine(c.content) }}</q-item-label>
           </q-item-section>
-          <q-item-section side class="text-caption">~{{ c.tokenEst }} tok</q-item-section>
+          <q-item-section side class="text-caption">{{ t('projects.ask.tok', { n: c.tokenEst }) }}</q-item-section>
         </q-item>
       </q-list>
       <q-card-section class="row items-center q-col-gutter-sm">
-        <q-select v-model="slotKey" class="col-5" dense outlined :options="slots.map((s) => ({ label: s.label, value: s.key }))" emit-value map-options label="Model" />
+        <q-select v-model="slotKey" class="col-5" dense outlined :options="slots.map((s) => ({ label: s.label, value: s.key }))" emit-value map-options :label="t('projects.ask.model')" />
         <div class="col text-caption">
-          ~{{ (context.tokens / 1000).toFixed(1) }}k token · {{ costLabel }} · Onaylı Brain bilgileri de gider.
-          <span :class="context.redactions ? 'text-warn' : 'text-grey-7'">{{ context.redactions ? `${context.redactions} gizli bilgi maskelendi.` : 'Maskelenecek bir şey yok.' }}</span>
+          {{ t('projects.ask.tokens', { tokens: (context.tokens / 1000).toFixed(1) }) }} · {{ costLabel }} · {{ t('projects.ask.factsToo') }}
+          <span :class="context.redactions ? 'text-warn' : 'text-grey-7'">{{ context.redactions ? t('projects.ask.redacted', { n: context.redactions }) : t('projects.ask.nothingRedacted') }}</span>
         </div>
         <div class="col-auto">
-          <q-btn v-if="!asking" unelevated color="primary" icon="send" label="Sor" :disable="!question.trim() || !slotKey || selected.size === 0" @click="ask" />
-          <q-btn v-else outline color="negative" icon="stop" label="Durdur" @click="controller?.abort()" />
+          <q-btn v-if="!asking" unelevated color="primary" icon="send" :label="t('projects.ask.send')" :disable="!question.trim() || !slotKey || selected.size === 0" @click="ask" />
+          <q-btn v-else outline color="negative" icon="stop" :label="t('projects.shared.stop')" @click="controller?.abort()" />
         </div>
       </q-card-section>
     </q-card>
-    <div v-else-if="searched" class="text-grey-7">Eşleşen kod bulunamadı; başka terimler dene.</div>
+    <div v-else-if="searched" class="text-grey-7">{{ t('projects.ask.noMatch') }}</div>
     <div v-if="error" class="text-negative">{{ error }}</div>
 
     <AskAnswerView v-if="current" :report="current" />
 
     <q-card v-if="history.length" flat bordered>
-      <q-card-section class="text-subtitle2">Önceki sorular</q-card-section>
+      <q-card-section class="text-subtitle2">{{ t('projects.ask.history') }}</q-card-section>
       <q-list dense separator>
         <q-item v-for="h in history" :key="h.id" clickable @click="showHistory(h)">
           <q-item-section>{{ (h.finalReport as AskReport).question }}</q-item-section>
-          <q-item-section side class="text-caption">{{ new Date(h.createdAt).toLocaleString() }} · ${{ h.actualCost.toFixed(4) }}</q-item-section>
+          <q-item-section side class="text-caption">{{ fmtDate(h.createdAt) }} · ${{ h.actualCost.toFixed(4) }}</q-item-section>
         </q-item>
       </q-list>
     </q-card>
@@ -68,6 +68,7 @@ import { costOf, priceLookup, type PriceLookup } from '@/domain/cost/pricing'
 import { loadModelSlots, type ModelSlot } from '@/domain/providers/available'
 import { createProvider } from '@/domain/providers/registry'
 import { CancelledError } from '@/domain/providers/types'
+import { fmtDate, t } from '@/i18n'
 import { tauriTransport } from '@/platform/tauri'
 
 const props = defineProps<{ project: Project }>()
@@ -101,7 +102,7 @@ const slot = computed(() => slots.value.find((s) => s.key === slotKey.value) ?? 
 const costLabel = computed(() => {
   if (!slot.value) return '—'
   const c = costOf(price.value(slot.value.provider, slot.value.model), { input: context.value.tokens, output: 1500, cached: 0 })
-  return c === null ? 'fiyatsız' : `~$${c.toFixed(3)}`
+  return c === null ? t('common.unpriced') : `~$${c.toFixed(3)}`
 })
 
 const firstLine = (s: string) => s.split('\n').find((l) => l.trim()) ?? ''
@@ -167,7 +168,7 @@ async function ask() {
     else current.value = res.report!
     await loadHistory()
   } catch (e) {
-    error.value = e instanceof CancelledError ? 'Durduruldu.' : String(e instanceof Error ? e.message : e)
+    error.value = e instanceof CancelledError ? t('projects.shared.stopped') : String(e instanceof Error ? e.message : e)
   } finally {
     asking.value = false
     controller = null

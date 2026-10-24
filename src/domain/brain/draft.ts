@@ -1,3 +1,4 @@
+import { modelLanguage, t } from '@/i18n'
 import { z } from 'zod'
 import type { BrainFact, brainFactsRepo } from '@/db/repositories/brainFacts'
 import type { sessionsRepo } from '@/db/repositories/sessions'
@@ -60,7 +61,7 @@ export async function generateBrainDraft(
     stack: stack.map((f) => `- ${f.statement}`).join('\n') || '(none detected)',
     tree: context.tree,
     documents: context.documents,
-    output_language: opts.outputLanguage ?? 'Turkish',
+    output_language: opts.outputLanguage ?? modelLanguage(),
   })
   const session = await deps.sessions.create({
     type: 'ask_project', // single-model project analysis; the purpose is recorded in config
@@ -95,7 +96,7 @@ export async function generateBrainDraft(
       if (!ok) dropped.push(p)
       return ok
     })
-    const statement = f.confidence === 'low' && !/^\s*\(?(muhtemelen|probably)/i.test(f.statement) ? `(düşük güven) ${f.statement}` : f.statement
+    const statement = f.confidence === 'low' && !/^\s*\(?(muhtemelen|probably)/i.test(f.statement) ? `(${t('common.confidence.low')}) ${f.statement}` : f.statement
     return { section: f.section, statement, evidence: evidence.map((file) => ({ file })) }
   })
   await deps.brain.replacePendingInferred(project.id, facts, session.id)

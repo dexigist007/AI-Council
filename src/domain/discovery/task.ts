@@ -1,4 +1,5 @@
 import type { CouncilTask } from '@/domain/council/engine'
+import { t } from '@/i18n'
 import { render } from '@/domain/prompts/registry'
 import { renderProfile, type DiscoveryProfile } from './profile'
 import { DiscoveryReport, type CandidateKind } from './report'
@@ -41,13 +42,13 @@ export function candidateToIdea(c: DiscoveryReport['candidates'][number]): { tit
     title: c.name,
     body: [
       c.one_liner,
-      `Hedef müşteri: ${c.target_customer}`,
-      `Problem: ${c.problem}`,
-      `Çözüm: ${c.solution}`,
-      `Gelir modeli: ${c.revenue_model} (${c.pricing})`,
-      `İlk gelir yolu: ${c.first_revenue_path}`,
-      `Kritik varsayımlar:\n${list(c.key_assumptions)}`,
-      `Riskler:\n${list(c.main_risks)}`,
+      t('ideas.candidateIdea.targetCustomer', { value: c.target_customer }),
+      t('ideas.candidateIdea.problem', { value: c.problem }),
+      t('ideas.candidateIdea.solution', { value: c.solution }),
+      t('ideas.candidateIdea.revenueModel', { model: c.revenue_model, pricing: c.pricing }),
+      t('ideas.candidateIdea.firstRevenuePath', { value: c.first_revenue_path }),
+      `${t('ideas.candidateIdea.assumptions')}\n${list(c.key_assumptions)}`,
+      `${t('ideas.candidateIdea.risks')}\n${list(c.main_risks)}`,
     ].join('\n\n'),
   }
 }

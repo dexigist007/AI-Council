@@ -1,3 +1,4 @@
+import { modelLanguage } from '@/i18n'
 import type { BrainFact } from '@/db/repositories/brainFacts'
 import type { findingsRepo, NewFinding, UpsertResult } from '@/db/repositories/findings'
 import type { ChunkWithPath, projectIndexRepo } from '@/db/repositories/projectIndex'
@@ -42,7 +43,7 @@ export function buildAuditTask(project: { id: string; name: string }, context: A
     type: 'audit',
     projectId: project.id,
     taskBrief: render('audit-brief', { categories: labels, project_name: project.name, facts: context.facts, excerpts: context.excerpts }).text,
-    judgeInstructions: render('audit-judge', { output_language: 'Turkish' }).text,
+    judgeInstructions: render('audit-judge', { output_language: modelLanguage() }).text,
     judgeSchema: AuditReport,
   }
 }

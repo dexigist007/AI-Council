@@ -1,7 +1,9 @@
 import type { FindingCategory } from '@/domain/findings/types'
+import { t, type MessageKey } from '@/i18n'
 
 export interface AuditFocus {
   id: string
+  /** Turkish name sent to the models in the audit brief; the UI shows `focusLabel(id)` instead. */
   label: string
   /** Search terms used to pick relevant code from the local index. */
   query: string
@@ -29,3 +31,7 @@ export const FOCUS_CATEGORY_HINT: Record<string, FindingCategory[]> = {
   architecture: ['architecture', 'maintainability'],
   configuration: ['configuration', 'secrets'],
 }
+
+/** Focus area name in the UI language. */
+export const focusLabel = (id: string): string =>
+  AUDIT_FOCUS.some((f) => f.id === id) ? t(`projects.audit.focus.${id}` as MessageKey) : id

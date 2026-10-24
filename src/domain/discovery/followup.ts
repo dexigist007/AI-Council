@@ -1,3 +1,4 @@
+import { modelLanguage } from '@/i18n'
 import type { sessionsRepo } from '@/db/repositories/sessions'
 import { costOf, type PriceLookup } from '@/domain/cost/pricing'
 import { callStructured } from '@/domain/council/structured'
@@ -32,7 +33,7 @@ export async function askFollowup(
   model: { provider: ProviderId; model: string; maxTokens?: number },
   opts: { outputLanguage?: string; signal?: AbortSignal; onDelta?: (text: string) => void } = {},
 ): Promise<{ sessionId: string; report?: DiscoveryReport; error?: string }> {
-  const language = opts.outputLanguage ?? 'Turkish'
+  const language = opts.outputLanguage ?? modelLanguage()
   const system = render('discovery-followup', {
     profile: renderProfile(parent.meta.profile),
     question: parent.meta.question,

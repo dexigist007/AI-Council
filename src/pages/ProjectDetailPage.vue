@@ -1,6 +1,6 @@
 <template>
   <q-page padding>
-    <div v-if="!project" class="text-grey-7">{{ notFound ? 'Proje bulunamadı.' : 'Yükleniyor…' }}</div>
+    <div v-if="!project" class="text-grey-7">{{ notFound ? t('projects.detail.notFound') : t('common.loading') }}</div>
     <div v-else style="max-width: 1200px">
       <div class="row items-center q-mb-sm">
         <div>
@@ -8,24 +8,24 @@
           <div class="text-caption text-grey-7">{{ project.rootPath }}</div>
         </div>
         <q-space />
-        <q-btn unelevated color="primary" icon="sync" label="Yeniden indeksle" :loading="!!progress" @click="reindex" />
+        <q-btn unelevated color="primary" icon="sync" :label="t('projects.detail.reindex')" :loading="!!progress" @click="reindex" />
       </div>
 
       <q-banner v-if="indexError" rounded class="tone-danger q-mb-md">
         {{ indexError }}
-        <template v-if="needsRepick" #action><q-btn flat label="Klasörü yeniden seç" @click="repick" /></template>
+        <template v-if="needsRepick" #action><q-btn flat :label="t('projects.detail.repick')" @click="repick" /></template>
       </q-banner>
       <q-linear-progress v-if="progress" :value="progress.total ? progress.done / progress.total : 0" :indeterminate="!progress.total" class="q-mb-md" />
-      <div v-if="progress" class="text-caption q-mb-md">{{ PHASE_LABEL[progress.phase] }} {{ progress.total ? `${progress.done}/${progress.total}` : '' }}</div>
+      <div v-if="progress" class="text-caption q-mb-md">{{ t(`projects.detail.phase.${progress.phase}`) }} {{ progress.total ? `${progress.done}/${progress.total}` : '' }}</div>
 
       <q-tabs v-model="tab" dense align="left" active-color="primary" indicator-color="primary" class="q-mb-md" no-caps>
-        <q-tab name="overview" label="Overview" />
-        <q-tab name="brain" label="Project Brain" />
-        <q-tab name="ask" label="Ask Project" />
-        <q-tab name="audit" label="Audit" />
-        <q-tab name="findings" label="Findings" />
-        <q-tab name="git" label="Git Changes" />
-        <q-tab name="files" label="Files" />
+        <q-tab name="overview" :label="t('projects.detail.tabs.overview')" />
+        <q-tab name="brain" :label="t('projects.detail.tabs.brain')" />
+        <q-tab name="ask" :label="t('projects.detail.tabs.ask')" />
+        <q-tab name="audit" :label="t('projects.detail.tabs.audit')" />
+        <q-tab name="findings" :label="t('projects.detail.tabs.findings')" />
+        <q-tab name="git" :label="t('projects.detail.tabs.git')" />
+        <q-tab name="files" :label="t('projects.detail.tabs.files')" />
         <q-tab name="settings" icon="settings" />
       </q-tabs>
 
@@ -73,11 +73,8 @@ import ProjectSettings from '@/components/projects/ProjectSettings.vue'
 import { repos, type BrainFact, type Project } from '@/db'
 import { indexProject, type IndexProgress } from '@/domain/indexing/indexer'
 import { indexerDeps } from '@/domain/indexing/runtime'
+import { t } from '@/i18n'
 import { projectsFs } from '@/platform/tauri'
-
-const PHASE_LABEL: Record<IndexProgress['phase'], string> = {
-  scan: 'Klasör taranıyor…', read: 'Değişen dosyalar okunuyor', detect: 'Teknolojiler tespit ediliyor…', done: 'Bitti',
-}
 
 const route = useRoute()
 const router = useRouter()
@@ -120,7 +117,7 @@ async function repick() {
   const root = await projectsFs.pickFolder()
   if (!root) return
   if (root !== project.value!.rootPath) {
-    indexError.value = `Seçilen klasör bu projeye ait değil: ${root}`
+    indexError.value = t('projects.detail.wrongFolder', { root })
     return
   }
   await reindex()

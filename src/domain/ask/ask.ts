@@ -1,3 +1,4 @@
+import { modelLanguage } from '@/i18n'
 import { z } from 'zod'
 import type { sessionsRepo } from '@/db/repositories/sessions'
 import { costOf, type PriceLookup } from '@/domain/cost/pricing'
@@ -43,7 +44,7 @@ export async function askProject(
     project_name: project.name,
     facts: context.facts,
     excerpts: context.excerpts,
-    output_language: opts.outputLanguage ?? 'Turkish',
+    output_language: opts.outputLanguage ?? modelLanguage(),
   })
   const session = await deps.sessions.create({
     type: 'ask_project',

@@ -3,35 +3,35 @@
     <q-card flat bordered>
       <q-card-section class="row items-center">
         <div class="col">
-          <div class="text-subtitle2">Yerel tarama</div>
-          <div class="text-caption text-grey-7">AI kullanmaz, ücretsizdir: TODO/FIXME, kodda gömülü olası gizli bilgiler, çok büyük dosyalar, test eksikliği.</div>
+          <div class="text-subtitle2">{{ t('projects.audit.localTitle') }}</div>
+          <div class="text-caption text-grey-7">{{ t('projects.audit.localHint') }}</div>
         </div>
-        <q-btn outline color="primary" icon="manage_search" label="Yerel taramayı çalıştır" :loading="scanning" :disable="!project.indexedAt" @click="localScan" />
+        <q-btn outline color="primary" icon="manage_search" :label="t('projects.audit.localRun')" :loading="scanning" :disable="!project.indexedAt" @click="localScan" />
       </q-card-section>
       <q-card-section v-if="localResult" class="q-pt-none text-caption">{{ localResult }}</q-card-section>
     </q-card>
 
     <q-card v-show="runHere?.status !== 'running'" flat bordered>
-      <q-card-section class="text-subtitle2">AI Council denetimi</q-card-section>
+      <q-card-section class="text-subtitle2">{{ t('projects.audit.councilTitle') }}</q-card-section>
       <q-card-section class="q-pt-none stack">
         <div>
-          <div class="text-caption text-grey-7 q-mb-xs">Odak alanları (her biri için yerel aramayla kod seçilir)</div>
-          <q-option-group v-model="focus" :options="AUDIT_FOCUS.map((f) => ({ label: f.label, value: f.id }))" type="checkbox" inline @update:model-value="prepare" />
+          <div class="text-caption text-grey-7 q-mb-xs">{{ t('projects.audit.focusHint') }}</div>
+          <q-option-group v-model="focus" :options="AUDIT_FOCUS.map((f) => ({ label: focusLabel(f.id), value: f.id }))" type="checkbox" inline @update:model-value="prepare" />
         </div>
         <CouncilMembers v-model="config" :roles="roles" />
         <div v-if="context">
           <div class="text-caption">
-            Gönderilecek: {{ chunks.length }} kod parçası, {{ context.files.length }} dosya · ~{{ (context.tokens / 1000).toFixed(1) }}k token (her üyeye) ·
-            tahmini toplam <b>{{ estimateLabel }}</b> ·
-            <span :class="context.redactions ? 'text-warn' : ''">{{ context.redactions }} maskeleme</span>
+            {{ t('projects.audit.toSend', { chunks: chunks.length, files: context.files.length }) }} · {{ t('projects.shared.perMember', { tokens: (context.tokens / 1000).toFixed(1) }) }} ·
+            {{ t('projects.shared.estimatedTotal') }} <b>{{ estimateLabel }}</b> ·
+            <span :class="context.redactions ? 'text-warn' : ''">{{ t('projects.shared.redactions', { n: context.redactions }) }}</span>
           </div>
-          <q-expansion-item dense dense-toggle label="Gönderilecek dosyalar" class="text-caption">
+          <q-expansion-item dense dense-toggle :label="t('projects.audit.filesToSend')" class="text-caption">
             <div class="q-pl-md"><code v-for="f in context.files" :key="f" class="q-mr-sm">{{ f }}</code></div>
           </q-expansion-item>
         </div>
       </q-card-section>
       <q-card-actions class="q-px-md q-pb-md">
-        <q-btn unelevated color="primary" icon="fact_check" label="Denetimi başlat" :disable="!!disabledReason" @click="start" />
+        <q-btn unelevated color="primary" icon="fact_check" :label="t('projects.audit.start')" :disable="!!disabledReason" @click="start" />
         <span v-if="disabledReason" class="text-caption text-grey-7 q-ml-md">{{ disabledReason }}</span>
       </q-card-actions>
     </q-card>
@@ -39,23 +39,23 @@
     <CouncilProgress v-if="runHere" :run="runHere" @cancel="store.cancel()" @dismiss="store.dismiss()" />
     <q-card v-if="runHere?.auditSaved" flat bordered>
       <q-card-section>
-        <div class="text-subtitle2">Denetim tamamlandı</div>
-        <div>{{ runHere.auditSaved.added }} yeni bulgu, {{ runHere.auditSaved.updated }} mevcut bulgu güncellendi.
-          <span v-if="runHere.auditSaved.unverified" class="text-negative">{{ runHere.auditSaved.unverified }} bulgunun kanıtı kodda bulunamadı (UNVERIFIED, en fazla P2).</span></div>
+        <div class="text-subtitle2">{{ t('projects.audit.done') }}</div>
+        <div>{{ t('projects.audit.saved', { added: runHere.auditSaved.added, updated: runHere.auditSaved.updated }) }}
+          <span v-if="runHere.auditSaved.unverified" class="text-negative">{{ t('projects.audit.unverified', { n: runHere.auditSaved.unverified }) }}</span></div>
         <div v-if="summary" class="q-mt-sm" style="white-space: pre-wrap">{{ summary }}</div>
       </q-card-section>
       <q-card-section v-if="opportunities.length" class="q-pt-none">
-        <div class="text-subtitle2">Geliştirme fırsatları</div>
+        <div class="text-subtitle2">{{ t('projects.audit.opportunities') }}</div>
         <q-list dense>
           <q-item v-for="(o, i) in opportunities" :key="i">
             <q-item-section>
-              <q-item-label>{{ o.title }} <q-badge outline color="positive">değer: {{ o.value }}</q-badge> <q-badge outline>efor: {{ o.effort }}</q-badge></q-item-label>
+              <q-item-label>{{ o.title }} <q-badge outline color="positive">{{ t('projects.audit.value', { v: o.value }) }}</q-badge> <q-badge outline>{{ t('projects.audit.effort', { v: o.effort }) }}</q-badge></q-item-label>
               <q-item-label caption>{{ o.reason }} <span v-if="o.evidence_files.length">({{ o.evidence_files.join(', ') }})</span></q-item-label>
             </q-item-section>
           </q-item>
         </q-list>
       </q-card-section>
-      <q-card-actions><q-btn flat color="primary" label="Bulgulara git" @click="$emit('show-findings')" /></q-card-actions>
+      <q-card-actions><q-btn flat color="primary" :label="t('projects.shared.goToFindings')" @click="$emit('show-findings')" /></q-card-actions>
     </q-card>
   </div>
 </template>
@@ -67,11 +67,12 @@ import CouncilProgress from '@/components/council/CouncilProgress.vue'
 import { repos, type BrainFact, type ChunkWithPath, type Project } from '@/db'
 import type { AskContext } from '@/domain/ask/context'
 import { auditContext, auditRoles, buildAuditTask, selectAuditChunks, sourcesFromExcerpts } from '@/domain/audit/audit'
-import { AUDIT_FOCUS } from '@/domain/audit/categories'
+import { AUDIT_FOCUS, focusLabel } from '@/domain/audit/categories'
 import { localFindings } from '@/domain/audit/local'
 import type { AuditReport } from '@/domain/audit/report'
 import { priceLookup, type PriceLookup } from '@/domain/cost/pricing'
 import { estimateCouncil, type CouncilConfig } from '@/domain/council/engine'
+import { t } from '@/i18n'
 import { useCouncilRun } from '@/stores/councilRun'
 
 const props = defineProps<{ project: Project }>()
@@ -94,14 +95,14 @@ const summary = computed(() => report.value?.summary ?? '')
 const opportunities = computed(() => report.value?.opportunities ?? [])
 
 const estimate = computed(() => (config.value && context.value ? estimateCouncil(buildAuditTask(props.project, context.value, focus.value), config.value, price.value) : null))
-const estimateLabel = computed(() => (!estimate.value ? '—' : estimate.value.usd === null ? 'fiyatsız' : `~$${estimate.value.usd.toFixed(3)}`))
+const estimateLabel = computed(() => (!estimate.value ? '—' : estimate.value.usd === null ? t('common.unpriced') : `~$${estimate.value.usd.toFixed(3)}`))
 const disabledReason = computed(() => {
-  if (!props.project.indexedAt) return 'Önce projeyi indeksle.'
-  if (store.active?.status === 'running') return 'Başka bir oturum çalışıyor.'
-  if (focus.value.length === 0) return 'En az bir odak alanı seç.'
-  if (!context.value || chunks.value.length === 0) return 'Seçili alanlar için kod bulunamadı.'
-  if (!config.value) return 'En az 2 üye ve bir Judge gerekli.'
-  if (estimate.value?.usd != null && config.value.budgetUsd !== undefined && estimate.value.usd > config.value.budgetUsd) return 'Tahmini maliyet bütçeyi aşıyor.'
+  if (!props.project.indexedAt) return t('projects.audit.indexFirst')
+  if (store.active?.status === 'running') return t('projects.shared.otherSessionRunning')
+  if (focus.value.length === 0) return t('projects.audit.pickFocus')
+  if (!context.value || chunks.value.length === 0) return t('projects.audit.noCode')
+  if (!config.value) return t('projects.shared.needMembers')
+  if (estimate.value?.usd != null && config.value.budgetUsd !== undefined && estimate.value.usd > config.value.budgetUsd) return t('projects.shared.overBudget')
   return ''
 })
 
@@ -118,7 +119,7 @@ async function localScan() {
     const [files, all] = await Promise.all([r.projectIndex.listFiles(props.project.id), r.projectIndex.allChunks(props.project.id)])
     const found = localFindings(files, all)
     const res = await r.findings.upsertMany(props.project.id, null, found)
-    localResult.value = `${found.length} yerel bulgu: ${res.added} yeni, ${res.updated} güncellendi.`
+    localResult.value = t('projects.audit.localResult', { n: found.length, added: res.added, updated: res.updated })
     emit('changed')
   } finally {
     scanning.value = false

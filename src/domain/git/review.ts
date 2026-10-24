@@ -1,3 +1,4 @@
+import { modelLanguage } from '@/i18n'
 import type { BrainFact } from '@/db/repositories/brainFacts'
 import { redact } from '@/domain/context/redactor'
 import type { CouncilTask } from '@/domain/council/engine'
@@ -78,7 +79,7 @@ export function buildReviewTask(project: { id: string; name: string }, target: s
     type: 'review_changes',
     projectId: project.id,
     taskBrief: render('review-changes', { project_name: project.name, target, facts: ctx.facts, diff: ctx.diff }).text,
-    judgeInstructions: render('audit-judge', { output_language: 'Turkish' }).text,
+    judgeInstructions: render('audit-judge', { output_language: modelLanguage() }).text,
     judgeSchema: AuditReport,
   }
 }

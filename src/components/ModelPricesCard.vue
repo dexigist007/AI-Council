@@ -1,15 +1,12 @@
 <template>
   <q-card flat bordered>
     <q-card-section>
-      <div class="text-subtitle1">Model fiyatları</div>
-      <div class="text-caption text-grey-7">
-        1 milyon token başına USD. Fiyatlar sık değiştiği için uygulamaya gömülü değil; sağlayıcının fiyat
-        sayfasından girersin. Fiyatı olmayan modellerin maliyeti "fiyatsız" olarak gösterilir, $0 sayılmaz.
-      </div>
+      <div class="text-subtitle1">{{ t('shell.prices.title') }}</div>
+      <div class="text-caption text-soft">{{ t('shell.prices.hint') }}</div>
     </q-card-section>
     <q-markup-table flat dense separator="horizontal">
       <thead>
-        <tr><th class="text-left">Sağlayıcı</th><th class="text-left">Model</th><th>Giriş</th><th>Önbellek</th><th>Çıkış</th><th /></tr>
+        <tr><th class="text-left">{{ t('shell.prices.provider') }}</th><th class="text-left">{{ t('shell.prices.model') }}</th><th>{{ t('shell.prices.input') }}</th><th>{{ t('shell.prices.cached') }}</th><th>{{ t('shell.prices.output') }}</th><th /></tr>
       </thead>
       <tbody>
         <tr v-for="p in prices" :key="p.provider + p.model">
@@ -38,6 +35,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { repos, type ModelPrice } from '@/db'
 import { PROVIDERS } from '@/domain/providers/registry'
+import { t } from '@/i18n'
 import type { ProviderId } from '@/domain/providers/types'
 
 const prices = ref<ModelPrice[]>([])

@@ -1,55 +1,54 @@
 <template>
   <q-card flat bordered>
     <q-card-section class="row items-center q-gutter-md">
-      <div class="text-subtitle1">{{ title }}</div>
+      <div class="text-subtitle1">{{ title ?? t('council.configurator.title') }}</div>
       <q-space />
       <slot name="actions" />
       <q-btn-toggle
         v-model="mode" no-caps unelevated toggle-color="secondary"
-        :options="[{ label: 'FAST', value: 'fast' }, { label: 'BALANCED', value: 'balanced' }]"
+        :options="[{ label: t('council.mode.fast'), value: 'fast' }, { label: t('council.mode.balanced'), value: 'balanced' }]"
       />
     </q-card-section>
 
-    <q-card-section v-if="loading" class="text-soft">Sağlayıcılar yükleniyor…</q-card-section>
+    <q-card-section v-if="loading" class="text-soft">{{ t('council.configurator.loadingProviders') }}</q-card-section>
     <q-card-section v-else-if="available.length === 0">
       <q-banner rounded class="tone-warn">
-        Etkin ve modeli seçilmiş bir sağlayıcı yok. Settings'te en az bir sağlayıcıya anahtar ekleyip etkinleştir
-        ve varsayılan modelini seç.
+        {{ t('council.configurator.noProvider') }}
       </q-banner>
     </q-card-section>
     <template v-else>
       <q-card-section class="q-pt-none">
         <div class="text-caption text-soft q-mb-sm">
-          {{ mode === 'fast' ? 'FAST: bağımsız analiz → Judge.' : 'BALANCED: bağımsız analiz → çapraz eleştiri → Judge.' }}
-          Farklı sağlayıcılar daha gerçek görüş ayrılığı üretir; aynı sağlayıcıyı farklı rollerle de kullanabilirsin.
+          {{ mode === 'fast' ? t('council.configurator.fastFlow') : t('council.configurator.balancedFlow') }}
+          {{ t('council.configurator.diversityHint') }}
         </div>
         <div v-for="(p, i) in participants" :key="i" class="row q-col-gutter-sm items-center q-mb-xs">
-          <q-select v-model="p.slot" class="col-6" dense outlined :options="slotOptions" emit-value map-options label="Model" />
-          <q-select v-model="p.roleId" class="col" dense outlined :options="roleOptions" emit-value map-options label="Rol" />
+          <q-select v-model="p.slot" class="col-6" dense outlined :options="slotOptions" emit-value map-options :label="t('council.configurator.model')" />
+          <q-select v-model="p.roleId" class="col" dense outlined :options="roleOptions" emit-value map-options :label="t('council.configurator.role')" />
           <div class="col-auto">
             <q-btn flat round dense icon="close" :disable="participants.length <= 2" @click="participants.splice(i, 1)" />
           </div>
         </div>
-        <q-btn flat dense no-caps icon="add" label="Üye ekle" :disable="participants.length >= 6" @click="addParticipant" />
+        <q-btn flat dense no-caps icon="add" :label="t('council.configurator.addMember')" :disable="participants.length >= 6" @click="addParticipant" />
       </q-card-section>
 
       <q-card-section class="q-pt-none row q-col-gutter-sm items-start">
         <q-select
-          v-model="judgeSlot" class="col-6" dense outlined :options="slotOptions" emit-value map-options label="Judge"
-          :hint="judgeIsMember ? 'Judge aynı zamanda üye; kendi görüşünü kayırabilir.' : 'Konsey dışı Judge (önerilen).'"
+          v-model="judgeSlot" class="col-6" dense outlined :options="slotOptions" emit-value map-options :label="t('council.configurator.judge')"
+          :hint="judgeIsMember ? t('council.configurator.judgeIsMember') : t('council.configurator.judgeOutside')"
         />
-        <q-input v-model.number="budget" class="col-3" dense outlined type="number" step="0.5" min="0" label="Bütçe (USD)" />
+        <q-input v-model.number="budget" class="col-3" dense outlined type="number" step="0.5" min="0" :label="t('council.configurator.budget')" />
         <div class="col-3 text-caption q-pt-sm">
-          <div>Tahmini: <b>{{ estimateLabel }}</b></div>
-          <div class="text-soft">{{ estimate.calls }} çağrı · ~{{ Math.round(estimate.tokens / 1000) }}k token</div>
+          <div>{{ t('council.configurator.estimate') }} <b>{{ estimateLabel }}</b></div>
+          <div class="text-soft">{{ t('council.configurator.calls', { calls: estimate.calls, tokens: Math.round(estimate.tokens / 1000) }) }}</div>
         </div>
       </q-card-section>
       <q-card-section v-if="estimate.unpriced.length" class="q-pt-none text-caption text-warn">
-        Fiyatı girilmemiş modeller: {{ estimate.unpriced.join(', ') }} (Settings → Model fiyatları).
+        {{ t('council.configurator.unpricedModels', { models: estimate.unpriced.join(', ') }) }}
       </q-card-section>
 
       <q-card-actions class="q-px-md q-pb-md">
-        <q-btn unelevated :color="startColor" :icon="startIcon" :label="startLabel" :disable="disabled" @click="start" />
+        <q-btn unelevated :color="startColor" :icon="startIcon" :label="startLabel ?? t('council.configurator.start')" :disable="disabled" @click="start" />
         <span v-if="disabledReason" class="q-ml-md text-caption text-soft">{{ disabledReason }}</span>
       </q-card-actions>
     </template>
@@ -58,6 +57,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
+import { t } from '@/i18n'
 import { repos } from '@/db'
 import { priceLookup, type PriceLookup } from '@/domain/cost/pricing'
 import { estimateCouncil, type CouncilConfig, type CouncilMode, type CouncilTask, type Participant } from '@/domain/council/engine'
@@ -77,7 +77,7 @@ const props = withDefaults(
     startIcon?: string
     startColor?: string
   }>(),
-  { title: "Council'ı topla", startLabel: 'Council başlat', startIcon: 'play_arrow', startColor: 'primary', blockReason: '' },
+  { title: undefined, startLabel: undefined, startIcon: 'play_arrow', startColor: 'primary', blockReason: '' },
 )
 const emit = defineEmits<{ start: [config: CouncilConfig] }>()
 
@@ -125,14 +125,14 @@ const estimate = computed(() =>
     ? estimateCouncil(props.task, config.value, price.value)
     : { usd: null, tokens: 0, calls: 0, unpriced: [] as string[] },
 )
-const estimateLabel = computed(() => (estimate.value.usd === null ? 'fiyatsız' : `~$${estimate.value.usd.toFixed(3)}`))
+const estimateLabel = computed(() => (estimate.value.usd === null ? t('common.unpriced') : `~$${estimate.value.usd.toFixed(3)}`))
 
 const disabledReason = computed(() => {
-  if (props.busy) return 'Başka bir oturum çalışıyor.'
+  if (props.busy) return t('council.configurator.busy')
   if (props.blockReason) return props.blockReason
-  if (!config.value) return 'En az 2 üye ve bir Judge gerekli.'
+  if (!config.value) return t('council.configurator.needMembers')
   if (estimate.value.usd !== null && config.value.budgetUsd !== undefined && estimate.value.usd > config.value.budgetUsd)
-    return 'Tahmini maliyet bütçeyi aşıyor.'
+    return t('council.configurator.overBudget')
   return ''
 })
 const disabled = computed(() => disabledReason.value !== '')

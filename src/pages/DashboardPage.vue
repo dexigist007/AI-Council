@@ -1,12 +1,12 @@
 <template>
   <q-page padding>
-    <div class="text-h5 q-mb-md">Dashboard</div>
-    <q-banner v-if="error" class="bg-negative text-white q-mb-md" rounded>Veritabanı hatası: {{ error }}</q-banner>
+    <div class="text-h5 q-mb-md">{{ t('shell.nav.dashboard') }}</div>
+    <q-banner v-if="error" class="bg-negative text-white q-mb-md" rounded>{{ t('shell.dashboard.dbError', { error }) }}</q-banner>
     <div class="row q-col-gutter-md q-mb-md" style="max-width: 1100px">
       <div v-for="p in (['P0', 'P1', 'P2', 'P3'] as const)" :key="p" class="col-6 col-md-3">
         <q-card flat bordered class="cursor-pointer" @click="$router.push('/findings')">
           <q-card-section>
-            <div class="text-caption text-grey-7">Açık {{ p }} bulgu</div>
+            <div class="text-caption text-soft">{{ t('shell.dashboard.openFindings', { p }) }}</div>
             <div class="text-h5" :class="p === 'P0' && open.P0 ? 'text-negative' : ''">{{ open[p] }}</div>
           </q-card-section>
         </q-card>
@@ -15,38 +15,38 @@
     <div class="row q-col-gutter-md" style="max-width: 1100px">
       <div class="col-12 col-md-6">
         <q-card flat bordered class="full-height">
-          <q-card-section class="text-subtitle2">Karar bekleyen fikirler</q-card-section>
+          <q-card-section class="text-subtitle2">{{ t('shell.dashboard.waitingIdeas') }}</q-card-section>
           <q-list v-if="waiting.length" dense separator>
             <q-item v-for="i in waiting" :key="i.id" clickable :to="`/ideas/${i.id}`">
               <q-item-section>{{ i.title }}</q-item-section>
               <q-item-section side><q-badge :color="i.status === 'evaluating' ? 'orange' : 'grey-6'">{{ STATUS_LABEL[i.status] }}</q-badge></q-item-section>
             </q-item>
           </q-list>
-          <q-card-section v-else class="text-grey-7 q-pt-none">Yok. <router-link to="/ideas">Yeni bir fikir yaz.</router-link></q-card-section>
+          <q-card-section v-else class="text-soft q-pt-none">{{ t('shell.dashboard.noWaiting') }} <router-link to="/ideas">{{ t('shell.dashboard.writeIdea') }}</router-link></q-card-section>
         </q-card>
       </div>
       <div class="col-12 col-md-6">
         <q-card flat bordered class="full-height">
-          <q-card-section class="text-subtitle2">Son Council oturumları</q-card-section>
+          <q-card-section class="text-subtitle2">{{ t('shell.dashboard.recentSessions') }}</q-card-section>
           <q-list v-if="sessions.length" dense separator>
             <q-item v-for="s in sessions" :key="s.id" clickable :to="`/council/${s.id}`">
               <q-item-section>
                 <q-item-label>{{ titles[s.ideaId ?? ''] ?? sessionLabel(s) }}</q-item-label>
-                <q-item-label caption>{{ sessionLabel(s) }} · {{ new Date(s.createdAt).toLocaleDateString() }}</q-item-label>
+                <q-item-label caption>{{ sessionLabel(s) }} · {{ fmtDay(s.createdAt) }}</q-item-label>
               </q-item-section>
-              <q-item-section side><q-badge :color="STATUS_COLOR[s.status]">{{ s.status }}</q-badge></q-item-section>
+              <q-item-section side><q-badge :color="STATUS_COLOR[s.status]">{{ t(`common.status.${s.status}`) }}</q-badge></q-item-section>
             </q-item>
           </q-list>
-          <q-card-section v-else class="text-grey-7 q-pt-none">Henüz oturum yok.</q-card-section>
+          <q-card-section v-else class="text-soft q-pt-none">{{ t('shell.dashboard.noSessions') }}</q-card-section>
         </q-card>
       </div>
     </div>
     <q-card v-if="gitRows.length" flat bordered class="q-mt-md" style="max-width: 1100px">
-      <q-card-section class="text-subtitle2">Projelerdeki Git durumu</q-card-section>
+      <q-card-section class="text-subtitle2">{{ t('shell.dashboard.gitStatus') }}</q-card-section>
       <q-list dense separator>
         <q-item v-for="g in gitRows" :key="g.id" clickable :to="`/projects/${g.id}`">
           <q-item-section>{{ g.name }}</q-item-section>
-          <q-item-section side class="text-caption">{{ g.text }}</q-item-section>
+          <q-item-section side class="text-caption">{{ g.branch ?? t('shell.dashboard.detached') }} · {{ g.changed ? t('shell.dashboard.uncommitted', { n: g.changed }) : t('shell.dashboard.clean') }}</q-item-section>
         </q-item>
       </q-list>
     </q-card>
@@ -60,12 +60,13 @@ import { STATUS_LABEL } from '@/domain/ideas/labels'
 import { STATUS_COLOR, sessionLabel } from './sessionLabels'
 import { parseStatus } from '@/domain/git/parse'
 import { gitRun } from '@/platform/tauri'
+import { fmtDay, t } from '@/i18n'
 
 const ideas = ref<Idea[]>([])
 const sessions = ref<Session[]>([])
 const error = ref<string | null>(null)
 const open = ref({ P0: 0, P1: 0, P2: 0, P3: 0 })
-const gitRows = ref<{ id: string; name: string; text: string }[]>([])
+const gitRows = ref<{ id: string; name: string; branch: string | null; changed: number }[]>([])
 const waiting = computed(() => ideas.value.filter((i) => i.status === 'evaluating' || i.status === 'draft').slice(0, 8))
 const titles = computed(() => Object.fromEntries(ideas.value.map((i) => [i.id, i.title])))
 
@@ -80,7 +81,7 @@ onMounted(async () => {
     const rows = await Promise.all(projects.map(async (p) => {
       try {
         const s = parseStatus(await gitRun(p.rootPath, { op: 'status' }))
-        return { id: p.id, name: p.name, text: `${s.branch ?? 'detached'} · ${s.files.length ? `${s.files.length} commit edilmemiş dosya` : 'temiz'}` }
+        return { id: p.id, name: p.name, branch: s.branch, changed: s.files.length }
       } catch {
         return null
       }

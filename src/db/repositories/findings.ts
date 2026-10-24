@@ -7,6 +7,8 @@ import { fromBool, newId, nowIso, toBool } from '../util'
 
 export interface NewFinding {
   title: string
+  /** Language-independent text for the fingerprint when `title` is translated (rule-based findings). */
+  fingerprintTitle?: string
   description: string
   category: FindingCategory
   severity: Severity
@@ -19,7 +21,7 @@ export interface NewFinding {
   suggestedFix: string | null
 }
 
-export interface Finding extends Omit<NewFinding, 'evidence'> {
+export interface Finding extends Omit<NewFinding, 'evidence' | 'fingerprintTitle'> {
   id: string
   projectId: string
   sessionId: string | null
@@ -69,7 +71,7 @@ export function findingsRepo(db: Db) {
       for (const f of findings) {
         const verified = f.evidence.some((e) => e.verified)
         const { priority } = computePriority({ ...f, verified })
-        const fp = fingerprint(f.category, f.title, f.evidence[0]?.file ?? null)
+        const fp = fingerprint(f.category, f.fingerprintTitle ?? f.title, f.evidence[0]?.file ?? null)
         const existing = await db.select<{ id: string }>('SELECT id FROM findings WHERE project_id = ? AND fingerprint = ?', [projectId, fp])
         let id: string
         if (existing[0]) {

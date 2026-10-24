@@ -1,11 +1,11 @@
 <template>
   <div class="stack">
-    <q-input v-model="query" dense outlined clearable debounce="250" placeholder="Kodda ara (ör. playlist, firebase auth, PlayerViewModel)">
+    <q-input v-model="query" dense outlined clearable debounce="250" :placeholder="t('projects.files.searchPlaceholder')">
       <template #prepend><q-icon name="search" /></template>
     </q-input>
 
     <q-card v-if="query" flat bordered>
-      <q-card-section class="text-subtitle2">{{ hits.length }} sonuç <span class="text-caption text-grey-7">(yerel indeks, AI kullanılmadı)</span></q-card-section>
+      <q-card-section class="text-subtitle2">{{ t('projects.files.results', { n: hits.length }) }} <span class="text-caption text-grey-7">{{ t('projects.files.localOnly') }}</span></q-card-section>
       <q-list dense separator>
         <q-item v-for="h in hits" :key="h.chunkId">
           <q-item-section>
@@ -22,22 +22,23 @@
       style="max-height: 600px" :rows-per-page-options="[0]" :pagination="{ rowsPerPage: 0 }"
     >
       <template #top>
-        <div class="text-subtitle2">{{ files.length }} dosya</div>
+        <div class="text-subtitle2">{{ t('projects.files.count', { n: fmtNum(files.length) }) }}</div>
         <q-space />
-        <q-input v-model="filter" dense borderless placeholder="Yola göre filtrele"><template #append><q-icon name="filter_list" /></template></q-input>
+        <q-input v-model="filter" dense borderless :placeholder="t('projects.files.filter')"><template #append><q-icon name="filter_list" /></template></q-input>
       </template>
       <template #body-cell-skipReason="p">
-        <q-td :props="p"><q-badge v-if="p.value" color="grey-6">{{ SKIP_LABEL[p.value] ?? p.value }}</q-badge></q-td>
+        <q-td :props="p"><q-badge v-if="p.value" color="grey-6">{{ skipLabel(p.value) }}</q-badge></q-td>
       </template>
     </q-table>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import type { QTableColumn } from 'quasar'
 import { repos, type IndexedFile, type SearchHit } from '@/db'
-import { SKIP_LABEL } from './labels'
+import { fmtNum, t } from '@/i18n'
+import { skipLabel } from './labels'
 
 const props = defineProps<{ projectId: string; refreshKey: number }>()
 const files = ref<IndexedFile[]>([])
@@ -45,13 +46,13 @@ const query = ref('')
 const filter = ref('')
 const hits = ref<SearchHit[]>([])
 
-const columns: QTableColumn<IndexedFile>[] = [
-  { name: 'path', label: 'Yol', field: 'path', align: 'left', sortable: true },
-  { name: 'lang', label: 'Dil', field: 'lang', align: 'left', sortable: true },
-  { name: 'kind', label: 'Tür', field: 'kind', align: 'left', sortable: true },
-  { name: 'size', label: 'Boyut', field: 'size', sortable: true, format: (v: number) => `${(v / 1024).toFixed(1)} KB` },
-  { name: 'skipReason', label: 'Durum', field: 'skipReason', align: 'left' },
-]
+const columns = computed<QTableColumn<IndexedFile>[]>(() => [
+  { name: 'path', label: t('projects.files.col.path'), field: 'path', align: 'left', sortable: true },
+  { name: 'lang', label: t('projects.files.col.lang'), field: 'lang', align: 'left', sortable: true },
+  { name: 'kind', label: t('projects.files.col.kind'), field: 'kind', align: 'left', sortable: true },
+  { name: 'size', label: t('projects.files.col.size'), field: 'size', sortable: true, format: (v: number) => `${(v / 1024).toFixed(1)} KB` },
+  { name: 'skipReason', label: t('projects.files.col.status'), field: 'skipReason', align: 'left' },
+])
 
 /** Escapes the snippet, then turns FTS markers into highlights (code must never be rendered as HTML). */
 function highlight(s: string): string {

@@ -1,19 +1,19 @@
 <template>
   <q-card flat bordered class="tone-info">
     <q-card-section>
-      <div class="text-subtitle1">Senin kararın</div>
+      <div class="text-subtitle1">{{ t('ideas.verdict.title') }}</div>
       <div class="text-caption text-soft">
-        Council'ın önerisi bir karar değildir. Fikrin durumu ve Decision Log sadece burada onayladığında değişir.
+        {{ t('ideas.verdict.hint') }}
       </div>
     </q-card-section>
     <q-card-section class="q-pt-none q-gutter-sm">
       <q-btn-toggle v-model="decision" unelevated no-caps toggle-color="primary" :color="$q.dark.isActive ? 'grey-9' : 'white'" :text-color="$q.dark.isActive ? 'white' : 'dark'"
-        :options="DECISIONS.map((d) => ({ label: d === suggested ? `${d} (öneri)` : d, value: d }))" />
-      <q-input v-model="reason" dense outlined autogrow label="Gerekçe" />
-      <q-input v-if="parks" v-model="revisit" dense outlined autogrow label="Ne değişirse yeniden değerlendirilsin?" />
+        :options="DECISIONS.map((d) => ({ label: d === suggested ? t('ideas.verdict.suggested', { decision: d }) : d, value: d }))" />
+      <q-input v-model="reason" dense outlined autogrow :label="t('ideas.verdict.reason')" />
+      <q-input v-if="parks" v-model="revisit" dense outlined autogrow :label="t('ideas.verdict.revisit')" />
     </q-card-section>
     <q-card-actions class="q-px-md q-pb-md">
-      <q-btn unelevated color="primary" icon="gavel" :label="parks ? 'Onayla ve Graveyard\'a taşı' : 'Kararı onayla'"
+      <q-btn unelevated color="primary" icon="gavel" :label="parks ? t('ideas.verdict.confirmPark') : t('ideas.verdict.confirm')"
         :disable="!reason.trim()" :loading="saving" @click="save" />
       <span v-if="error" class="text-negative q-ml-md">{{ error }}</span>
     </q-card-actions>
@@ -25,6 +25,7 @@ import { computed, ref } from 'vue'
 import { repos, type Idea } from '@/db'
 import { decisionToStatus } from '@/domain/ideas/labels'
 import { DECISIONS, type IdeaDecision, type IdeaReport } from '@/domain/ideas/report'
+import { t } from '@/i18n'
 
 const props = defineProps<{ idea: Idea; report: IdeaReport; sessionId: string }>()
 const emit = defineEmits<{ decided: [] }>()
