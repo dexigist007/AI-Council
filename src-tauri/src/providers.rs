@@ -19,6 +19,12 @@ pub struct Provider {
     pub auth: Auth,
 }
 
+/// Every provider id `lookup` knows; used to migrate per-provider keychain items.
+pub const IDS: &[&str] = &[
+    "openai", "anthropic", "gemini", "deepseek", "kimi", "glm", "openrouter", "groq", "mistral", "cerebras",
+    "ollama", "lmstudio",
+];
+
 pub fn lookup(id: &str) -> Option<Provider> {
     let (base_url, auth) = match id {
         "openai" => ("https://api.openai.com/v1", Auth::Bearer),
@@ -93,6 +99,11 @@ mod tests {
             assert!(build_url(&p, bad).is_err(), "{bad} should be rejected");
         }
         assert!(lookup("evil").is_none());
+    }
+
+    #[test]
+    fn ids_match_lookup() {
+        assert!(IDS.iter().all(|id| lookup(id).is_some()));
     }
 
     #[test]
