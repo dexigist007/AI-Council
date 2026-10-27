@@ -52,6 +52,32 @@ fn migrations() -> Vec<Migration> {
     ]
 }
 
+/// The app was renamed from "AI Council" (com.dexigist.aicouncil) to Conclave, which moved its
+/// config dir. Copy the database and project list over once, so earlier users keep their data.
+/// Runs before the frontend opens the database. Failures are logged, never fatal.
+fn migrate_from_working_title(app: &tauri::AppHandle) {
+    use tauri::Manager;
+    let Ok(new_dir) = app.path().app_config_dir() else { return };
+    let Some(old_dir) = new_dir.parent().map(|p| p.join("com.dexigist.aicouncil")) else { return };
+    if new_dir.join("ai-council.db").exists() || !old_dir.join("ai-council.db").exists() {
+        return;
+    }
+    if let Err(e) = copy_files(&old_dir, &new_dir, &["ai-council.db", "ai-council.db-wal", "ai-council.db-shm", "roots.json"]) {
+        eprintln!("could not move data from {}: {e}", old_dir.display());
+    }
+}
+
+fn copy_files(from: &std::path::Path, to: &std::path::Path, names: &[&str]) -> std::io::Result<()> {
+    std::fs::create_dir_all(to)?;
+    for name in names {
+        let src = from.join(name);
+        if src.exists() {
+            std::fs::copy(&src, to.join(name))?;
+        }
+    }
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -64,6 +90,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .manage(ai_http::Cancels::default())
         .setup(|app| {
+            migrate_from_working_title(app.handle());
             app.manage(projects::load_roots(app.handle()));
             Ok(())
         })
@@ -84,5 +111,22 @@ pub fn run() {
             git::git_run
         ])
         .run(tauri::generate_context!())
-        .expect("error while running AI Council");
+        .expect("error while running Conclave");
+}
+
+#[cfg(test)]
+mod rename_tests {
+    use super::copy_files;
+
+    #[test]
+    fn copies_present_files_and_skips_missing() {
+        let base = std::env::temp_dir().join(format!("conclave-mig-{}", std::process::id()));
+        let (old, new) = (base.join("old"), base.join("new"));
+        std::fs::create_dir_all(&old).unwrap();
+        std::fs::write(old.join("ai-council.db"), b"db").unwrap();
+        copy_files(&old, &new, &["ai-council.db", "roots.json"]).unwrap();
+        assert_eq!(std::fs::read(new.join("ai-council.db")).unwrap(), b"db");
+        assert!(!new.join("roots.json").exists());
+        std::fs::remove_dir_all(&base).unwrap();
+    }
 }

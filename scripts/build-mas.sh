@@ -42,13 +42,13 @@ npm ci
 npm test
 npx tauri build --target universal-apple-darwin --bundles app --config "$work/tauri.appstore.conf.json"
 
-app="src-tauri/target/universal-apple-darwin/release/bundle/macos/AI Council.app"
+app="src-tauri/target/universal-apple-darwin/release/bundle/macos/Conclave.app"
 codesign -d --entitlements - "$app" | grep -q app-sandbox || { echo "app is not sandboxed" >&2; exit 1; }
-xcrun productbuild --sign "$MAS_INSTALLER_IDENTITY" --component "$app" /Applications "AI Council.pkg"
-echo "Built: $(pwd)/AI Council.pkg"
+xcrun productbuild --sign "$MAS_INSTALLER_IDENTITY" --component "$app" /Applications "Conclave.pkg"
+echo "Built: $(pwd)/Conclave.pkg"
 
 if [[ -n "${ASC_KEY_ID:-}" && -n "${ASC_ISSUER_ID:-}" ]]; then
-  xcrun altool --upload-app --type macos --file "AI Council.pkg" --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID"
+  xcrun altool --upload-app --type macos --file "Conclave.pkg" --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID"
 else
   echo "Upload with the Transporter app, or set ASC_KEY_ID and ASC_ISSUER_ID to upload with altool."
 fi

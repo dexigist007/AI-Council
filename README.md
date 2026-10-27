@@ -1,4 +1,6 @@
-# AI Council
+# Conclave
+
+_Previously developed under the working title "AI Council"._
 
 Kişisel, local-first multi-AI council masaüstü uygulaması (Tauri + Vue 3 + Quasar + SQLite).
 Kaynak kod bilgisayarından çıkmaz; yalnızca seçtiğin parçalar, maskelenerek, seçtiğin AI sağlayıcısına gider.

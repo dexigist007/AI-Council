@@ -4,15 +4,15 @@ Keep "make money fast" wording out of the listing (guideline 2.3.1); describe wh
 
 ## English (primary)
 
-**Name (≤30):** pick a unique one, e.g. `Council — AI Debate`
-**Subtitle (≤30):** `Several AIs weigh your ideas`
+**Name (≤30):** `Conclave` (fallbacks if taken: `Conclave — AI Council`, `Conclave: AI Debate`)
+**Subtitle (≤30):** `AI models debate. You decide.`
 
 **Promotional text (≤170):**
 Ask a panel of AI models instead of one. They analyse independently, challenge each other's claims,
 and a judge writes a clear, realistic report.
 
 **Description:**
-AI Council puts several AI models around one table. Instead of trusting a single answer, you watch
+Conclave puts several AI models in one room. Instead of trusting a single answer, you watch
 them analyse your question independently, challenge each other's claims, and hand the final word to
 a judge that weighs the arguments.
 
@@ -33,10 +33,10 @@ Reports are AI-generated suggestions, not financial, legal or tax advice.
 
 ## Türkçe
 
-**Alt başlık:** `Fikirlerini birden çok yapay zekâ tartar`
+**Alt başlık:** `Yapay zekâlar tartışır, sen karar verirsin`
 
 **Açıklama:**
-AI Council birden çok yapay zekâ modelini aynı masaya oturtur. Tek bir cevaba güvenmek yerine,
+Conclave birden çok yapay zekâ modelini aynı odada buluşturur. Tek bir cevaba güvenmek yerine,
 modellerin sorunu birbirinden bağımsız analiz etmesini, birbirinin iddialarına itiraz etmesini ve son
 sözü argümanları tartan bir Judge'ın söylemesini izlersin.
 

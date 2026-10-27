@@ -1,0 +1,14 @@
+<!-- Conclave logo lockup. The wordmark uses Instrument Sans (bundled in the app); outline the text
+     in a vector editor before using this file outside the app. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="560" height="128" viewBox="0 0 560 128">
+  <g transform="translate(0,0) scale(4)">
+    <rect x="0.5" y="0.5" width="31" height="31" rx="8.5" fill="#1e7a6e" />
+    <circle cx="7.82" cy="16.94" r="1.9" fill="#fff" />
+    <circle cx="10.95" cy="12.64" r="1.9" fill="#fff" />
+    <circle cx="16.00" cy="11.00" r="1.9" fill="#fff" />
+    <circle cx="21.05" cy="12.64" r="1.9" fill="#fff" />
+    <circle cx="24.18" cy="16.94" r="1.9" fill="#fff" />
+    <circle cx="16" cy="19.6" r="2.6" fill="#f5c451" />
+  </g>
+  <text x="156" y="88" font-family="'Instrument Sans Variable','Instrument Sans',-apple-system,sans-serif" font-size="76" font-weight="650" letter-spacing="-2" fill="#1a1d23">Conclave</text>
+</svg>

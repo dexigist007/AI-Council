@@ -147,7 +147,7 @@ export default {
     localHint: 'No AI, free: TODO/FIXME notes, possible secrets embedded in code, very large files, missing tests.',
     localRun: 'Run local scan',
     localResult: '{n} local findings: {added} new, {updated} updated.',
-    councilTitle: 'AI Council audit',
+    councilTitle: 'Council audit',
     focusHint: 'Focus areas (code for each is picked with a local search)',
     toSend: 'To send: {chunks} code chunks, {files} files',
     filesToSend: 'Files to send',

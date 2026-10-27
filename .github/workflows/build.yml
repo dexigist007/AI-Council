@@ -17,12 +17,12 @@ jobs:
             args: --target universal-apple-darwin --bundles app,dmg
             rust_targets: aarch64-apple-darwin,x86_64-apple-darwin
             artifact: src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg
-            name: AI-Council-macOS
+            name: Conclave-macOS
           - os: windows-latest
             args: --bundles nsis
             rust_targets: ''
             artifact: src-tauri/target/release/bundle/nsis/*.exe
-            name: AI-Council-Windows
+            name: Conclave-Windows
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4

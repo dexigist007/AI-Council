@@ -12,6 +12,7 @@ use std::sync::Mutex;
 
 use keyring::Entry;
 
+/// Keychain service name. Kept from the app's working title so saved keys stay found.
 const SERVICE: &str = "com.dexigist.aicouncil";
 
 /// Keys by provider, loaded from the store on first use. `None` = not loaded yet.

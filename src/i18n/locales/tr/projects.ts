@@ -148,7 +148,7 @@ export default {
     localHint: 'AI kullanmaz, ücretsizdir: TODO/FIXME, kodda gömülü olası gizli bilgiler, çok büyük dosyalar, test eksikliği.',
     localRun: 'Yerel taramayı çalıştır',
     localResult: '{n} yerel bulgu: {added} yeni, {updated} güncellendi.',
-    councilTitle: 'AI Council denetimi',
+    councilTitle: 'Council denetimi',
     focusHint: 'Odak alanları (her biri için yerel aramayla kod seçilir)',
     toSend: 'Gönderilecek: {chunks} kod parçası, {files} dosya',
     filesToSend: 'Gönderilecek dosyalar',

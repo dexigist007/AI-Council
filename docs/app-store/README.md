@@ -7,15 +7,14 @@ uygulama içi Git, veri gönderme onayı, gizlilik politikası, "tüm verileri s
 ## 1. Apple tarafı (bir kez)
 1. **Apple Developer Program** üyeliği (yıllık 99 USD) — developer.apple.com/programs.
 2. **App ID**: Certificates, Identifiers & Profiles → Identifiers → App ID → Bundle ID
-   `com.dexigist.aicouncil` (explicit). Ek yetenek (capability) gerekmez.
+   `com.dexigist.conclave` (explicit). Ek yetenek (capability) gerekmez.
 3. **Sertifikalar** (Xcode → Settings → Accounts → Manage Certificates ile en kolayı):
    - *Apple Distribution* (uygulamayı imzalar)
    - *Mac Installer Distribution* (.pkg'yi imzalar; Keychain'de "3rd Party Mac Developer Installer" adıyla görünür)
 4. **Provisioning profile**: Profiles → *Mac App Store Connect* → App ID'yi ve Apple Distribution sertifikasını seç → indir.
 5. **App Store Connect** → Apps → New App → macOS, Bundle ID'yi seç.
-   - **İsim:** "AI Council" büyük olasılıkla alınmış (App Store'da "The AI Council", Setapp'te "AI Council" var).
-     Ayırt edici bir isim seç, ör. *Council — AI Debate*, *Deliberate: AI Council*, *Concilium*. Uygulamanın
-     içindeki adı değiştirmek gerekmez ama aynı olması karışıklığı önler.
+   - **İsim:** *Conclave* (uygulamanın içindeki adla aynı). App Store Connect adı rezerve etmezse
+     *Conclave — AI Council* veya *Conclave: AI Debate* gibi bir ekle dene (en fazla 30 karakter).
 
 ## 2. Kodda doldurman gerekenler
 - `src/config/app.ts` → `SUPPORT_EMAIL`: gizlilik politikasında görünen iletişim adresi. Boşsa
@@ -29,9 +28,9 @@ uygulama içi Git, veri gönderme onayı, gizlilik politikası, "tüm verileri s
 export APPLE_TEAM_ID=XXXXXXXXXX
 export MAS_APP_IDENTITY="Apple Distribution: Ad Soyad (XXXXXXXXXX)"
 export MAS_INSTALLER_IDENTITY="3rd Party Mac Developer Installer: Ad Soyad (XXXXXXXXXX)"
-export MAS_PROFILE=~/Downloads/AI_Council_MAS.provisionprofile
+export MAS_PROFILE=~/Downloads/Conclave_MAS.provisionprofile
 export BUILD_NUMBER=1            # her yüklemede artır
-./scripts/build-mas.sh           # "AI Council.pkg" üretir
+./scripts/build-mas.sh           # "Conclave.pkg" üretir
 ```
 Yükleme: **Transporter** uygulamasıyla .pkg'yi sürükle-bırak; ya da App Store Connect API anahtarıyla
 `ASC_KEY_ID` / `ASC_ISSUER_ID` ayarlayıp betiğin yüklemesine izin ver.

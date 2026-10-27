@@ -1,6 +1,6 @@
 # Notes for App Review (paste into App Store Connect → App Review Information → Notes)
 
-AI Council is a free, local-first app. The user brings their own API key for an AI provider
+Conclave is a free, local-first app. The user brings their own API key for an AI provider
 (bring-your-own-key); the app has no server, no account and no analytics. Data goes directly from
 the Mac to the provider the user chooses, after the user gives explicit permission per provider.
 

@@ -6,7 +6,7 @@
     <q-drawer :model-value="true" persistent :breakpoint="0" :width="236" class="sidebar">
       <div class="brand" data-tauri-drag-region>
         <BrandMark class="brand-mark" />
-        <span class="brand-name">AI Council</span>
+        <span class="brand-name">Conclave</span>
       </div>
       <nav class="nav">
         <div v-for="(group, gi) in navGroups" :key="gi" class="nav-group">

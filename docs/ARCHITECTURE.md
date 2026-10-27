@@ -1,4 +1,4 @@
-# AI Council — Mimari (Faz 0)
+# Conclave (eski adıyla AI Council) — Mimari (Faz 0)
 
 Kişisel, local-first, tek kullanıcılı masaüstü aracı (macOS + Windows). Birden fazla AI modelini
 yapılandırılmış bir konsey olarak çalıştırır: (1) yeni fikirleri değerlendirir, (2) diskteki projeleri
