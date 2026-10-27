@@ -93,6 +93,7 @@
 </template>
 
 <script setup lang="ts">
+import { ensureConsent } from '@/ui/consent'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import IdeaReportView from '@/components/ideas/IdeaReportView.vue'
@@ -170,6 +171,7 @@ const followupModel = computed(() => {
 
 async function ask() {
   if (!session.value || !dMeta.value || !discoveryReport.value || !followupModel.value) return
+  if (!(await ensureConsent([followupModel.value.provider]))) return
   asking.value = true
   askError.value = ''
   liveText.value = ''

@@ -9,6 +9,7 @@ import type { DiscoveryMeta } from '@/domain/discovery/followup'
 import type { DiscoveryReport } from '@/domain/discovery/report'
 import { buildDiscoveryTask, type DiscoveryInput } from '@/domain/discovery/task'
 import { roleBrief } from '@/domain/prompts/registry'
+import { ensureConsent } from '@/ui/consent'
 import { councilDeps } from '@/domain/council/runtime'
 import { saveAuditFindings, type EvidenceSources } from '@/domain/audit/audit'
 import type { AuditReport } from '@/domain/audit/report'
@@ -48,6 +49,11 @@ export const useCouncilRun = defineStore('councilRun', () => {
     active.value = { ...active.value!, ...p }
   }
 
+  /** Every model in the council needs the user's permission before anything is sent. */
+  async function permitted(config: CouncilConfig): Promise<boolean> {
+    return ensureConsent([...config.participants, config.judge].map((p) => p.provider))
+  }
+
   function begin(kind: ActiveRun['kind'], config: CouncilConfig, ids: { ideaId?: string; projectId?: string } = {}) {
     if (active.value?.status === 'running') throw new Error(t('council.errors.alreadyRunning'))
     const all = [...config.participants, config.judge]
@@ -71,6 +77,7 @@ export const useCouncilRun = defineStore('councilRun', () => {
   }
 
   async function startIdea(idea: Idea, mode: IdeaMode, config: CouncilConfig) {
+    if (!(await permitted(config))) return
     const task = buildIdeaTask(idea, mode)
     const r = await repos()
     const opts = begin('idea', config, { ideaId: idea.id })
@@ -105,6 +112,7 @@ export const useCouncilRun = defineStore('councilRun', () => {
     sources: EvidenceSources,
     meta: Record<string, unknown>,
   ) {
+    if (!(await permitted(config))) return
     const opts = begin('project', config, { projectId: project.id })
     try {
       const run = await runCouncil(await councilDeps(), task, { ...config, meta }, opts)
@@ -119,6 +127,7 @@ export const useCouncilRun = defineStore('councilRun', () => {
 
   /** Opportunity discovery: no idea yet, the council proposes and ranks candidates. */
   async function startDiscovery(input: DiscoveryInput, config: CouncilConfig) {
+    if (!(await permitted(config))) return
     const task = buildDiscoveryTask(input)
     const opts = begin('discovery', config)
     const meta: DiscoveryMeta & { promptVersions: Record<string, number> } = {

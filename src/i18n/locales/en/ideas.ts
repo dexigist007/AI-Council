@@ -89,6 +89,7 @@ export default {
     session: 'session',
   },
   discovery: {
+    disclaimer: 'AI-generated suggestions from third-party models. They may be wrong and are not financial, legal or tax advice; results are not guaranteed.',
     title: 'Discovery',
     intro:
       "No idea yet? Describe your goal and constraints: the council proposes candidates, critiques each other's, and the Judge produces an actionable shortlist. Results are hypotheses to test: the models have no current market data.",

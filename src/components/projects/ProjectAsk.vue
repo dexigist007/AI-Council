@@ -59,6 +59,7 @@
 </template>
 
 <script setup lang="ts">
+import { ensureConsent } from '@/ui/consent'
 import { computed, onMounted, ref, watch } from 'vue'
 import AskAnswerView from './AskAnswerView.vue'
 import { repos, type BrainFact, type ChunkWithPath, type Project, type Session } from '@/db'
@@ -153,6 +154,7 @@ async function loadHistory() {
 
 async function ask() {
   if (!slot.value) return
+  if (!(await ensureConsent([slot.value.provider]))) return
   asking.value = true
   error.value = null
   controller = new AbortController()

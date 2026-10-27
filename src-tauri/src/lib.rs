@@ -61,6 +61,7 @@ pub fn run() {
                 .build(),
         )
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_opener::init())
         .manage(ai_http::Cancels::default())
         .setup(|app| {
             app.manage(projects::load_roots(app.handle()));
@@ -71,10 +72,12 @@ pub fn run() {
             secrets::secret_set,
             secrets::secret_delete,
             secrets::secret_exists,
+            secrets::secret_clear_all,
             ai_http::ai_request,
             ai_http::ai_cancel,
             projects::project_pick_folder,
             projects::project_forget_root,
+            projects::project_forget_all,
             projects::project_default_excludes,
             projects::project_scan,
             projects::project_read_files,

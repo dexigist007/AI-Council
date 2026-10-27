@@ -50,6 +50,7 @@ export const routes: RouteRecordRaw[] = [
       { path: 'ideas/:id', component: () => import('@/pages/IdeaDetailPage.vue'), meta: { title: 'shell.title.idea' } },
       { path: 'projects/:id', component: () => import('@/pages/ProjectDetailPage.vue'), meta: { title: 'shell.title.project' } },
       { path: 'council/:id', component: () => import('@/pages/CouncilSessionPage.vue'), meta: { title: 'shell.title.session' } },
+      { path: 'privacy', component: () => import('@/pages/PrivacyPage.vue'), meta: { title: 'shell.privacyPage.title' } },
     ],
   },
   { path: '/:pathMatch(.*)*', redirect: { name: 'dashboard' } },

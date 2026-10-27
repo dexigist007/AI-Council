@@ -4,6 +4,7 @@
       <div>
         <div class="text-h5">{{ t('ideas.discovery.title') }}</div>
         <div class="text-soft">{{ t('ideas.discovery.intro') }}</div>
+        <div class="text-caption text-soft q-mt-xs disclaimer"><q-icon name="info" size="15px" /> {{ t('ideas.discovery.disclaimer') }}</div>
       </div>
 
       <template v-if="!runHere || runHere.status !== 'running'">

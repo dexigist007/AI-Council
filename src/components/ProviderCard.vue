@@ -16,7 +16,8 @@
 
     <q-card-section class="q-pt-none q-gutter-y-sm">
       <div v-if="meta.keyless" class="text-caption text-soft">
-        {{ t('shell.provider.localHint', { url: meta.keyUrl, cmd: 'ollama pull qwen2.5:7b' }) }}
+        {{ t('shell.provider.localHint', { cmd: 'ollama pull qwen2.5:7b' }) }}
+        <a href="#" @click.prevent="openUrl(meta.keyUrl)">{{ meta.keyUrl }}</a>
       </div>
       <div v-else class="row q-col-gutter-sm items-center">
         <q-input
@@ -24,7 +25,7 @@
           :label="hasKey ? t('shell.provider.newKey') : t('shell.provider.apiKey')"
         >
           <template #hint>
-            {{ t('shell.provider.keyHint', { url: meta.keyUrl }) }}
+            {{ t('shell.provider.keyHint', { url: '' }) }}<a href="#" @click.prevent="openUrl(meta.keyUrl)">{{ meta.keyUrl }}</a>
           </template>
         </q-input>
         <div class="col-auto q-gutter-x-sm">
@@ -69,10 +70,11 @@
 </template>
 
 <script setup lang="ts">
+import { ensureConsent } from '@/ui/consent'
 import { computed, onMounted, ref } from 'vue'
 import { repos } from '@/db'
 import type { ProviderConfig } from '@/db'
-import { secrets, tauriTransport } from '@/platform/tauri'
+import { openUrl, secrets, tauriTransport } from '@/platform/tauri'
 import { createProvider, type ProviderMeta } from '@/domain/providers/registry'
 import { ProviderError } from '@/domain/providers/types'
 import { t } from '@/i18n'
@@ -146,6 +148,7 @@ const loadModels = () => run('models', async () => {
 })
 
 const test = () => run('test', async () => {
+  if (!(await ensureConsent([props.meta.id]))) return
   const started = performance.now()
   const res = await provider().chat({
     model: config.value.defaultModel!,

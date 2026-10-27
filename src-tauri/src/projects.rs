@@ -61,8 +61,18 @@ const LOCK_FILES: &[&str] = &[
     "pubspec.lock",
 ];
 
+/// Readable roots. On macOS each root may hold a security-scoped grant (see `scoped`), which keeps
+/// the folder readable inside the App Sandbox after a relaunch; dropping it ends the access.
 #[derive(Default)]
-pub struct Roots(Mutex<Vec<PathBuf>>);
+pub struct Roots(Mutex<Vec<PathBuf>>, Mutex<Vec<(PathBuf, scoped::Grant)>>);
+
+/// One saved root. Older versions stored a bare path list; both formats load.
+#[derive(Serialize, Deserialize, Clone)]
+struct RootEntry {
+    path: PathBuf,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    bookmark: Option<Vec<u8>>,
+}
 
 fn roots_file(app: &AppHandle) -> Result<PathBuf, String> {
     let dir = app.path().app_config_dir().map_err(|e| e.to_string())?;
@@ -70,18 +80,48 @@ fn roots_file(app: &AppHandle) -> Result<PathBuf, String> {
     Ok(dir.join("roots.json"))
 }
 
-pub fn load_roots(app: &AppHandle) -> Roots {
-    let list = roots_file(app)
-        .ok()
-        .and_then(|f| fs::read_to_string(f).ok())
-        .and_then(|s| serde_json::from_str::<Vec<PathBuf>>(&s).ok())
-        .unwrap_or_default();
-    Roots(Mutex::new(list))
+fn read_entries(app: &AppHandle) -> Vec<RootEntry> {
+    let Some(text) = roots_file(app).ok().and_then(|f| fs::read_to_string(f).ok()) else {
+        return Vec::new();
+    };
+    serde_json::from_str::<Vec<RootEntry>>(&text)
+        .or_else(|_| {
+            serde_json::from_str::<Vec<PathBuf>>(&text)
+                .map(|ps| ps.into_iter().map(|path| RootEntry { path, bookmark: None }).collect())
+        })
+        .unwrap_or_default()
 }
 
-fn save_roots(app: &AppHandle, list: &[PathBuf]) -> Result<(), String> {
-    let json = serde_json::to_string_pretty(list).map_err(|e| e.to_string())?;
+fn write_entries(app: &AppHandle, entries: &[RootEntry]) -> Result<(), String> {
+    let json = serde_json::to_string_pretty(entries).map_err(|e| e.to_string())?;
     fs::write(roots_file(app)?, json).map_err(|e| e.to_string())
+}
+
+/// Loads saved roots and re-opens their security-scoped grants. A root whose grant cannot be
+/// resolved stays listed (outside the sandbox the plain path still works); inside the sandbox
+/// reads then fail with a clear error and the user can pick the folder again.
+pub fn load_roots(app: &AppHandle) -> Roots {
+    let mut entries = read_entries(app);
+    let mut grants = Vec::new();
+    let mut changed = false;
+    for e in &mut entries {
+        let Some(bookmark) = e.bookmark.clone() else { continue };
+        match scoped::open(&bookmark) {
+            Ok(opened) => {
+                if opened.stale || opened.path != e.path {
+                    e.path = opened.path.clone();
+                    e.bookmark = scoped::create(&e.path).ok().or(e.bookmark.take());
+                    changed = true;
+                }
+                grants.push((e.path.clone(), opened.grant));
+            }
+            Err(err) => eprintln!("project folder {} needs to be picked again: {err}", e.path.display()),
+        }
+    }
+    if changed {
+        let _ = write_entries(app, &entries);
+    }
+    Roots(Mutex::new(entries.into_iter().map(|e| e.path).collect()), Mutex::new(grants))
 }
 
 /// Resolves `root` and checks it was picked by the user.
@@ -109,11 +149,15 @@ pub async fn project_pick_folder(
     };
     let path = picked.into_path().map_err(|e| e.to_string())?;
     let canonical = fs::canonicalize(&path).map_err(|e| e.to_string())?;
-    let mut list = roots.0.lock().unwrap().clone();
+    // Create the bookmark now, while the dialog's sandbox extension for this folder is active.
+    let bookmark = scoped::create(&canonical).ok();
+    let mut entries = read_entries(&app);
+    entries.retain(|e| e.path != canonical);
+    entries.push(RootEntry { path: canonical.clone(), bookmark });
+    write_entries(&app, &entries)?;
+    let mut list = roots.0.lock().unwrap();
     if !list.contains(&canonical) {
         list.push(canonical.clone());
-        save_roots(&app, &list)?;
-        *roots.0.lock().unwrap() = list;
     }
     Ok(Some(canonical.to_string_lossy().into_owned()))
 }
@@ -132,10 +176,20 @@ pub fn project_forget_root(
     let Ok(canonical) = fs::canonicalize(&root) else {
         return Ok(());
     };
-    let mut list = roots.0.lock().unwrap().clone();
-    list.retain(|r| r != &canonical);
-    save_roots(&app, &list)?;
-    *roots.0.lock().unwrap() = list;
+    let mut entries = read_entries(&app);
+    entries.retain(|e| e.path != canonical);
+    write_entries(&app, &entries)?;
+    roots.0.lock().unwrap().retain(|r| r != &canonical);
+    roots.1.lock().unwrap().retain(|(p, _)| p != &canonical); // drops the grant: access ends
+    Ok(())
+}
+
+/// Forgets every project folder and ends all folder grants ("Delete all data" in Settings).
+#[tauri::command]
+pub fn project_forget_all(app: AppHandle, roots: State<'_, Roots>) -> Result<(), String> {
+    write_entries(&app, &[])?;
+    roots.0.lock().unwrap().clear();
+    roots.1.lock().unwrap().clear();
     Ok(())
 }
 
@@ -434,5 +488,82 @@ mod tests {
         ] {
             assert!(resolve_inside(&root, bad).is_err(), "{bad}");
         }
+    }
+}
+
+/// Security-scoped bookmarks (macOS App Sandbox). Elsewhere these are no-ops.
+#[cfg(target_os = "macos")]
+mod scoped {
+    use objc2::rc::Retained;
+    use objc2::runtime::Bool;
+    use objc2_foundation::{NSData, NSURLBookmarkCreationOptions, NSURLBookmarkResolutionOptions, NSURL};
+    use std::path::{Path, PathBuf};
+
+    /// Keeps a folder readable until dropped. NSURL is immutable and documented thread-safe.
+    pub struct Grant(Retained<NSURL>);
+    unsafe impl Send for Grant {}
+    unsafe impl Sync for Grant {}
+    impl Drop for Grant {
+        fn drop(&mut self) {
+            unsafe { self.0.stopAccessingSecurityScopedResource() };
+        }
+    }
+
+    pub struct Opened {
+        pub grant: Grant,
+        pub path: PathBuf,
+        pub stale: bool,
+    }
+
+    pub fn create(path: &Path) -> Result<Vec<u8>, String> {
+        let url = NSURL::from_directory_path(path).ok_or("invalid folder path")?;
+        url.bookmarkDataWithOptions_includingResourceValuesForKeys_relativeToURL_error(
+            NSURLBookmarkCreationOptions::WithSecurityScope
+                | NSURLBookmarkCreationOptions::SecurityScopeAllowOnlyReadAccess,
+            None,
+            None,
+        )
+        .map(|d| d.to_vec())
+        .map_err(|e| e.localizedDescription().to_string())
+    }
+
+    pub fn open(bookmark: &[u8]) -> Result<Opened, String> {
+        let data = NSData::with_bytes(bookmark);
+        let mut stale = Bool::NO;
+        let url = unsafe {
+            NSURL::URLByResolvingBookmarkData_options_relativeToURL_bookmarkDataIsStale_error(
+                &data,
+                NSURLBookmarkResolutionOptions::WithSecurityScope,
+                None,
+                &mut stale,
+            )
+        }
+        .map_err(|e| e.localizedDescription().to_string())?;
+        if !unsafe { url.startAccessingSecurityScopedResource() } {
+            return Err("access to the folder was revoked".into());
+        }
+        let path = url.to_file_path().ok_or("bookmark has no file path")?;
+        Ok(Opened { grant: Grant(url), path, stale: stale.as_bool() })
+    }
+}
+
+#[cfg(not(target_os = "macos"))]
+#[allow(dead_code)]
+mod scoped {
+    use std::path::{Path, PathBuf};
+
+    pub struct Grant;
+    pub struct Opened {
+        pub grant: Grant,
+        pub path: PathBuf,
+        pub stale: bool,
+    }
+
+    pub fn create(_path: &Path) -> Result<Vec<u8>, String> {
+        Err("bookmarks are only used on macOS".into())
+    }
+
+    pub fn open(_bookmark: &[u8]) -> Result<Opened, String> {
+        Err("bookmarks are only used on macOS".into())
     }
 }

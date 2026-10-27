@@ -90,6 +90,7 @@ export default {
     session: 'oturum',
   },
   discovery: {
+    disclaimer: 'Yapay zekâ önerileridir; hatalı olabilir. Finansal, hukuki veya vergisel tavsiye değildir ve sonuç garantisi yoktur.',
     title: 'Keşif',
     intro:
       'Henüz fikrin yoksa hedefini ve kısıtlarını yaz; council aday üretir, birbirinin adaylarını eleştirir ve Judge uygulanabilir bir kısa liste çıkarır. Sonuçlar test edilecek hipotezlerdir: modellerin güncel pazar verisi yoktur.',

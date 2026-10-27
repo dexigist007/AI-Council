@@ -15,6 +15,7 @@
     </div>
     <q-banner v-if="error" class="bg-negative text-white q-mb-md" rounded>{{ error }}</q-banner>
     <div v-if="configs" class="stack" style="max-width: 900px">
+      <PrivacyCard />
       <ProviderCard v-for="meta in PROVIDERS" :key="meta.id" :meta="meta" :initial="configs[meta.id]" />
       <ModelPricesCard />
     </div>
@@ -27,6 +28,7 @@ import { onMounted, ref } from 'vue'
 import { LOCALES, locale, t } from '@/i18n'
 import { setLocale } from '@/i18n/setup'
 import ModelPricesCard from '@/components/ModelPricesCard.vue'
+import PrivacyCard from '@/components/PrivacyCard.vue'
 import ProviderCard from '@/components/ProviderCard.vue'
 import { repos, type ProviderConfig } from '@/db'
 import { defaultProviderConfig } from '@/db/repositories/providerConfigs'

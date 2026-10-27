@@ -65,16 +65,21 @@ pub enum StreamEvent {
     Data(String),
 }
 
-fn client() -> &'static reqwest::Client {
-    static CLIENT: OnceLock<reqwest::Client> = OnceLock::new();
-    CLIENT.get_or_init(|| {
-        reqwest::Client::builder()
-            .connect_timeout(Duration::from_secs(20))
-            // Long council turns can stream for many minutes; only stalls should fail.
-            .read_timeout(Duration::from_secs(300))
-            .build()
-            .expect("http client")
-    })
+/// Shared client. TLS roots are bundled (webpki), so this does not depend on the system trust
+/// store; a build failure is reported as an error instead of crashing the app.
+fn client() -> Result<&'static reqwest::Client, String> {
+    static CLIENT: OnceLock<Result<reqwest::Client, String>> = OnceLock::new();
+    CLIENT
+        .get_or_init(|| {
+            reqwest::Client::builder()
+                .connect_timeout(Duration::from_secs(20))
+                // Long council turns can stream for many minutes; only stalls should fail.
+                .read_timeout(Duration::from_secs(300))
+                .build()
+                .map_err(|e| format!("could not start the HTTP client: {e}"))
+        })
+        .as_ref()
+        .map_err(Clone::clone)
 }
 
 #[tauri::command]
@@ -109,7 +114,7 @@ async fn perform(req: AiRequest, on_event: Channel<StreamEvent>) -> Result<AiRes
         "POST" => reqwest::Method::POST,
         m => return Err(format!("unsupported method: {m}")),
     };
-    let mut builder = client().request(method, url);
+    let mut builder = client()?.request(method, url);
     builder = match provider.auth {
         Auth::Bearer => builder.bearer_auth(&key),
         Auth::Anthropic => builder

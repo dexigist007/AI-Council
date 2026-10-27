@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Mac App Store build only (see scripts/build-mas.sh, which fills in __TEAM_ID__).
+  - network.client: HTTPS to AI providers and plain http to Ollama / LM Studio on localhost.
+  - files.user-selected.read-only + bookmarks.app-scope: read project folders the user picks,
+    and keep reading them after relaunch (security-scoped bookmarks in projects.rs).
+  Nothing else: no server sockets, no write access, no temporary exceptions.
+-->
+<plist version="1.0">
+<dict>
+  <key>com.apple.security.app-sandbox</key>
+  <true/>
+  <key>com.apple.security.network.client</key>
+  <true/>
+  <key>com.apple.security.files.user-selected.read-only</key>
+  <true/>
+  <key>com.apple.security.files.bookmarks.app-scope</key>
+  <true/>
+  <key>com.apple.application-identifier</key>
+  <string>__TEAM_ID__.com.dexigist.aicouncil</string>
+  <key>com.apple.developer.team-identifier</key>
+  <string>__TEAM_ID__</string>
+</dict>
+</plist>

@@ -1,6 +1,16 @@
 <template>
   <q-page padding>
     <div class="text-h5 q-mb-md">{{ t('shell.nav.dashboard') }}</div>
+    <q-card v-if="noModels" flat bordered class="q-mb-md welcome" style="max-width: 1100px">
+      <q-card-section class="row items-center no-wrap q-gutter-md">
+        <q-icon name="key" size="28px" color="primary" />
+        <div class="col">
+          <div class="text-subtitle1">{{ t('shell.dashboard.welcomeTitle') }}</div>
+          <div class="text-soft q-mt-xs">{{ t('shell.dashboard.welcomeBody') }}</div>
+        </div>
+        <q-btn unelevated color="primary" no-caps :label="t('shell.dashboard.welcomeAction')" to="/settings" />
+      </q-card-section>
+    </q-card>
     <q-banner v-if="error" class="bg-negative text-white q-mb-md" rounded>{{ t('shell.dashboard.dbError', { error }) }}</q-banner>
     <div class="row q-col-gutter-md q-mb-md" style="max-width: 1100px">
       <div v-for="p in (['P0', 'P1', 'P2', 'P3'] as const)" :key="p" class="col-6 col-md-3">
@@ -61,11 +71,13 @@ import { STATUS_COLOR, sessionLabel } from './sessionLabels'
 import { parseStatus } from '@/domain/git/parse'
 import { gitRun } from '@/platform/tauri'
 import { fmtDay, t } from '@/i18n'
+import { loadModelSlots } from '@/domain/providers/available'
 
 const ideas = ref<Idea[]>([])
 const sessions = ref<Session[]>([])
 const error = ref<string | null>(null)
 const open = ref({ P0: 0, P1: 0, P2: 0, P3: 0 })
+const noModels = ref(false)
 const gitRows = ref<{ id: string; name: string; branch: string | null; changed: number }[]>([])
 const waiting = computed(() => ideas.value.filter((i) => i.status === 'evaluating' || i.status === 'draft').slice(0, 8))
 const titles = computed(() => Object.fromEntries(ideas.value.map((i) => [i.id, i.title])))
@@ -73,6 +85,7 @@ const titles = computed(() => Object.fromEntries(ideas.value.map((i) => [i.id, i
 onMounted(async () => {
   try {
     const r = await repos()
+    noModels.value = (await loadModelSlots()).length === 0
     ideas.value = await r.ideas.list()
     sessions.value = await r.sessions.list({ limit: 8 })
     open.value = await r.findings.countOpenByPriority()

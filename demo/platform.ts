@@ -7,7 +7,10 @@ export const secrets = {
   set: async (_provider: string, _key: string) => {},
   delete: async (_provider: string) => {},
   exists: async (provider: string) => DEMO_KEYS.has(provider),
+  clearAll: async () => {},
 }
+
+export const openUrl = async (url: string) => void window.open(url, '_blank')
 
 export const tauriTransport: Transport = async () => {
   throw new Error('Demo mode: no network access')
@@ -19,6 +22,7 @@ export interface FileContent { path: string; content: string | null; error: stri
 export const projectsFs = {
   pickFolder: async () => null as string | null,
   forgetRoot: async (_root: string) => {},
+  forgetAll: async () => {},
   defaultExcludes: async () => ['node_modules', 'build', '.gradle', 'dist'],
   scan: async (_root: string, _excludes: string[]) => ({ entries: [] as ScanEntry[], truncated: false }),
   readFiles: async (_root: string, paths: string[]) => paths.map((path) => ({ path, content: null, error: 'demo' })) as FileContent[],

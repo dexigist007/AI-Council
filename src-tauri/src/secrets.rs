@@ -159,6 +159,19 @@ pub fn secret_exists(provider: String) -> Result<bool, String> {
     with_keys(|keys| Ok(keys.contains_key(&provider)))
 }
 
+/// Removes every stored key ("Delete all data" in Settings).
+#[tauri::command]
+pub fn secret_clear_all() -> Result<(), String> {
+    let mut guard = CACHE.lock().map_err(|_| "secret cache poisoned".to_string())?;
+    #[cfg(target_os = "macos")]
+    remove("vault")?;
+    for id in crate::providers::IDS {
+        remove(id)?; // older per-provider items, and every item on Windows/Linux
+    }
+    *guard = Some(HashMap::new());
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

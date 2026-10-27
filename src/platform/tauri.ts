@@ -1,12 +1,18 @@
 // Every invoke() call lives here so the rest of the app stays testable without Tauri.
 import { Channel, invoke } from '@tauri-apps/api/core'
+import { openUrl as openExternal } from '@tauri-apps/plugin-opener'
+import { assertConsent } from '@/domain/consent'
 import { CancelledError, type Transport, type TransportRequest, type TransportResponse } from '@/domain/providers/types'
 
 export const secrets = {
   set: (provider: string, key: string) => invoke<void>('secret_set', { provider, key }),
   delete: (provider: string) => invoke<void>('secret_delete', { provider }),
   exists: (provider: string) => invoke<boolean>('secret_exists', { provider }),
+  clearAll: () => invoke<void>('secret_clear_all'),
 }
+
+/** Opens an https/mailto link in the default browser (scope limited in capabilities). */
+export const openUrl = (url: string) => openExternal(url)
 
 type StreamEvent = { type: 'data'; data: string }
 
@@ -16,6 +22,8 @@ export const tauriTransport: Transport = async (
   signal?: AbortSignal,
 ): Promise<TransportResponse> => {
   if (signal?.aborted) throw new CancelledError()
+  // Requests that carry user data (POST) need the user's permission for this provider.
+  if (req.method === 'POST') await assertConsent(req.provider)
   const channel = new Channel<StreamEvent>()
   channel.onmessage = (ev) => onData?.(ev.data)
   const requestId = signal ? crypto.randomUUID() : null
@@ -48,6 +56,7 @@ export const projectsFs = {
   /** Native folder picker; registers the folder as readable. Null when cancelled. */
   pickFolder: () => invoke<string | null>('project_pick_folder'),
   forgetRoot: (root: string) => invoke<void>('project_forget_root', { root }),
+  forgetAll: () => invoke<void>('project_forget_all'),
   defaultExcludes: () => invoke<string[]>('project_default_excludes'),
   scan: (root: string, excludes: string[]) =>
     invoke<{ entries: ScanEntry[]; truncated: boolean }>('project_scan', { root, excludes }),

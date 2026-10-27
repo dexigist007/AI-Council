@@ -4,6 +4,7 @@
       <q-card-section>
         <div class="text-subtitle1 q-mb-xs">{{ t('ideas.discoveryReport.summary') }}</div>
         <div style="white-space: pre-wrap">{{ report.summary }}</div>
+        <div class="text-caption text-soft q-mt-sm"><q-icon name="info" size="15px" /> {{ t('ideas.discovery.disclaimer') }}</div>
       </q-card-section>
       <q-card-section v-if="report.reality_check.length" class="q-pt-none">
         <q-banner rounded class="tone-warn">

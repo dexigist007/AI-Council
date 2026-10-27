@@ -43,6 +43,7 @@
 </template>
 
 <script setup lang="ts">
+import { ensureConsent } from '@/ui/consent'
 import { computed, ref, watch } from 'vue'
 import { repos, type Project } from '@/db'
 import { buildBrainContext, pickBrainFiles, type BrainContext } from '@/domain/brain/context'
@@ -97,6 +98,7 @@ async function prepare() {
 
 async function send() {
   if (!context.value || !slot.value) return
+  if (!(await ensureConsent([slot.value.provider]))) return
   running.value = true
   error.value = null
   controller = new AbortController()

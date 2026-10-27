@@ -1,6 +1,6 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
-import { Quasar, Dark, type GlobalQuasarIconMapFn } from 'quasar'
+import { Quasar, Dark, Dialog, type GlobalQuasarIconMapFn } from 'quasar'
 import '@quasar/extras/material-symbols-rounded/material-symbols-rounded.css'
 import iconSet from 'quasar/icon-set/material-symbols-rounded'
 import 'quasar/src/css/index.sass'
@@ -18,7 +18,7 @@ const app = createApp(App)
   .use(createPinia())
   .use(router)
   .use(Quasar, {
-    plugins: { Dark },
+    plugins: { Dark, Dialog },
     iconSet,
     // Quasar reads iconMapFn from config at install time, but its config type does not declare it.
     config: { dark: 'auto', iconMapFn } as Record<string, unknown>,
