@@ -1,10 +1,10 @@
 <template>
   <q-page padding>
-    <div v-if="!session" class="text-grey-7">{{ t('common.loading') }}</div>
+    <div v-if="!session" class="text-soft">{{ t('common.loading') }}</div>
     <div v-else class="stack" style="max-width: 1100px">
       <div>
         <div class="text-h5">{{ sessionLabel(session) }} · {{ session.mode.toUpperCase() }}</div>
-        <div class="text-caption text-grey-7">
+        <div class="text-caption text-soft">
           {{ fmtDate(session.createdAt) }} ·
           <q-badge :color="STATUS_COLOR[session.status]">{{ t(`common.status.${session.status}`) }}</q-badge> ·
           {{ t('council.session.estimated') }} {{ session.estCost === null ? t('common.unpriced') : `$${session.estCost.toFixed(4)}` }} · {{ t('council.session.actual') }} ${{ session.actualCost.toFixed(4) }}
@@ -59,7 +59,7 @@
         <q-card-section>
           <div class="text-subtitle2">{{ t('council.session.summary') }}</div>
           <div style="white-space: pre-wrap">{{ findingsReport.judge.summary }}</div>
-          <div class="text-caption text-grey-7 q-mt-sm">
+          <div class="text-caption text-soft q-mt-sm">
             {{ t('council.session.findingsNote', { count: findingsReport.judge.findings.length }) }}
             <router-link v-if="session.projectId" :to="`/projects/${session.projectId}`">{{ t('council.session.goToProject') }}</router-link>
           </div>

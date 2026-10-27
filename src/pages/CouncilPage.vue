@@ -1,7 +1,7 @@
 <template>
   <q-page padding>
     <div class="text-h5 q-mb-md">{{ t('council.list.title') }}</div>
-    <div v-if="rows.length === 0" class="text-grey-7">{{ t('council.list.empty') }}</div>
+    <div v-if="rows.length === 0" class="text-soft">{{ t('council.list.empty') }}</div>
     <q-list v-else bordered separator style="max-width: 1000px">
       <q-item v-for="s in rows" :key="s.id" clickable :to="`/council/${s.id}`">
         <q-item-section>

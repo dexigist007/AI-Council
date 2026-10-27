@@ -1,0 +1,208 @@
+/*
+ * AI Council design tokens and Quasar overrides.
+ * Quiet, cool neutrals; one accent (verdigris); colour is reserved for meaning: council seats,
+ * verdicts, severities. Components should use these variables, not Quasar's fixed palette.
+ */
+:root {
+  --sidebar: #eceef1;
+  --bg: #f7f8fa;
+  --surface: #ffffff;
+  --surface-2: #f1f3f6;
+  --line: #e2e5ea;
+  --line-strong: #cfd4dc;
+  --ink: #1a1d23;
+  --muted: #5f6673;
+  --accent: #1e7a6e;
+  --accent-ink: #145a51;
+  --accent-soft: #e2f1ee;
+  --warn: #a8560c;
+  --warn-soft: #fbf0e3;
+  --danger: #b4322b;
+  --danger-soft: #fbe9e7;
+  --seat-1: #3e6fd8;
+  --seat-2: #c9771f;
+  --seat-3: #8a55cf;
+  --seat-4: #c0457a;
+  --seat-5: #2f8fa6;
+  --seat-6: #6c7685;
+  --seat-judge: var(--accent);
+  --radius-lg: 14px;
+  --radius: 10px;
+  --radius-sm: 7px;
+  --font: 'Instrument Sans Variable', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --q-primary: var(--accent);
+  --q-positive: #2f8a57;
+  --q-negative: var(--danger);
+  --q-warning: #d9901f;
+}
+
+.body--dark {
+  --sidebar: #131519;
+  --bg: #191b20;
+  --surface: #1f2228;
+  --surface-2: #262a31;
+  --line: #2d3139;
+  --line-strong: #3a3f49;
+  --ink: #e7e9ed;
+  --muted: #9aa1ad;
+  --accent: #4dbcab;
+  --accent-ink: #7fd6c8;
+  --accent-soft: rgba(77, 188, 171, 0.13);
+  --warn: #f0b36a;
+  --warn-soft: rgba(240, 179, 106, 0.11);
+  --danger: #f08a80;
+  --danger-soft: rgba(240, 138, 128, 0.12);
+  --seat-1: #6f97ef;
+  --seat-2: #e3a256;
+  --seat-3: #ad86e6;
+  --seat-4: #e079a6;
+  --seat-5: #5cb6cc;
+  --seat-6: #96a0ae;
+  --q-primary: var(--accent);
+  --q-negative: var(--danger);
+  --q-positive: #5cc08a;
+  --q-warning: #e8ad55;
+}
+
+/* Rounded symbols, light stroke: softer than the filled Material icons. */
+.material-symbols-rounded { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+
+/* ── Base ─────────────────────────────────────────────────────────────────────────────── */
+html, body {
+  font-family: var(--font);
+  font-size: 14px;
+  background: var(--bg);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: 'ss01', 'cv11';
+}
+body.body--dark { background: var(--bg); color: var(--ink); }
+::selection { background: var(--accent-soft); }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+code, pre { font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-size: 12.5px; }
+
+/* Type scale (major third, 14px base). Headings carry weight, not colour. */
+.text-h4 { font-size: 30px; line-height: 1.15; font-weight: 600; letter-spacing: -0.02em; }
+.text-h5 { font-size: 26px; line-height: 1.2; font-weight: 600; letter-spacing: -0.018em; }
+.text-h6 { font-size: 18px; line-height: 1.3; font-weight: 600; letter-spacing: -0.01em; }
+.text-subtitle1 { font-size: 15.5px; line-height: 1.35; font-weight: 600; letter-spacing: -0.005em; }
+.text-subtitle2 { font-size: 14px; line-height: 1.4; font-weight: 600; letter-spacing: 0; }
+.text-body1, .text-body2 { font-size: 14px; line-height: 1.55; letter-spacing: 0; }
+.text-caption { font-size: 12.5px; line-height: 1.45; letter-spacing: 0; }
+.text-soft { color: var(--muted) !important; }
+.text-warn { color: var(--warn) !important; }
+
+/* Vertical spacing without Quasar's negative-margin gutters, which misalign when nested. */
+.stack { display: flex; flex-direction: column; gap: 18px; }
+
+/* ── Surfaces ─────────────────────────────────────────────────────────────────────────── */
+.q-card {
+  background: var(--surface);
+  color: var(--ink);
+  border-radius: var(--radius-lg);
+  box-shadow: none;
+}
+.q-card--bordered, .q-card.q-card--flat { border: 1px solid var(--line); }
+.q-card--dark { background: var(--surface); }
+.q-separator { background: var(--line); }
+.q-list--bordered, .q-list--separator > .q-item-type + .q-item-type, .q-list--separator > .q-virtual-scroll__content > .q-item-type + .q-item-type {
+  border-color: var(--line);
+}
+.q-markup-table { background: transparent; color: inherit; }
+.q-table--horizontal-separator tbody tr:not(:last-child) > td,
+.q-table--horizontal-separator thead th,
+.q-markup-table thead th, .q-markup-table td { border-color: var(--line); }
+.q-markup-table thead th { font-size: 12px; font-weight: 600; color: var(--muted); }
+.q-menu, .q-dialog .q-card { background: var(--surface); border: 1px solid var(--line); box-shadow: 0 18px 50px rgba(15, 20, 30, 0.18); }
+
+/* Theme-aware tinted surfaces (Quasar's bg-*-1 classes stay light in dark mode). */
+.tone-info { background: var(--accent-soft); color: inherit; }
+.tone-warn { background: var(--warn-soft); color: var(--warn); }
+.tone-danger { background: var(--danger-soft); color: var(--danger); }
+.tone-muted { background: var(--surface-2); color: inherit; }
+.q-banner { border-radius: var(--radius); padding: 12px 14px; min-height: 0; }
+
+/* ── Controls ─────────────────────────────────────────────────────────────────────────── */
+/* Quasar uppercases buttons and tabs; CSS uppercasing turns Turkish "i" into "I" instead of "İ". */
+.q-btn, .q-tab__label { text-transform: none; }
+.q-btn { border-radius: var(--radius-sm); font-weight: 560; letter-spacing: 0; }
+.q-btn--round { border-radius: 50%; }
+.q-btn:before { box-shadow: none !important; }
+.q-btn--outline:before { border-color: var(--line-strong); }
+.q-btn-group, .q-btn-toggle { border-radius: var(--radius-sm); box-shadow: none; }
+.q-btn-toggle { background: var(--surface-2); padding: 2px; gap: 2px; }
+.q-btn-toggle .q-btn { border-radius: 6px !important; }
+
+.q-field--outlined .q-field__control { border-radius: var(--radius-sm); background: var(--surface); }
+.q-field--outlined .q-field__control:before { border-color: var(--line-strong); }
+.q-field--outlined:hover .q-field__control:before { border-color: var(--muted); }
+.q-field__label, .q-field__bottom { color: var(--muted); }
+.q-field--dark .q-field__control, .q-field--dark .q-field__native { color: var(--ink); }
+
+.q-badge { border-radius: 6px; font-weight: 600; font-size: 11.5px; padding: 3px 7px; letter-spacing: 0; line-height: 1.2; }
+.q-badge--outline { border-color: var(--line-strong); color: var(--muted); }
+.q-chip { border-radius: 8px; font-weight: 500; }
+
+.q-tabs { color: var(--muted); }
+.q-tab { padding: 0 14px; min-height: 40px; }
+.q-tab--active { color: var(--ink); }
+.q-tab__label { font-size: 13.5px; font-weight: 560; }
+.q-tab__indicator { height: 2px; border-radius: 2px; background: var(--accent); }
+
+.q-expansion-item__container > .q-item { border-radius: var(--radius); }
+.q-item { border-radius: var(--radius-sm); }
+.q-item__label--caption { color: var(--muted); }
+.q-linear-progress { border-radius: 4px; }
+
+/* Thin, quiet scrollbars. */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 8px; border: 3px solid transparent; background-clip: content-box; }
+::-webkit-scrollbar-track { background: transparent; }
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+/* ── Council vocabulary ───────────────────────────────────────────────────────────────── */
+/* A member's seat: the one place colour identifies a voice. */
+.seat {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 11.5px;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+}
+/* Quiet tinted tags for claim types; colour encodes meaning only. */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 7px;
+  margin-right: 6px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  vertical-align: 1px;
+  color: var(--tag, var(--muted));
+  background: color-mix(in srgb, var(--tag, var(--muted)) 13%, transparent);
+}
+.tag-id { --tag: var(--muted); background: transparent; box-shadow: inset 0 0 0 1px var(--line-strong); font-variant-numeric: tabular-nums; }
+.tag-strength { --tag: var(--q-positive); }
+.tag-weakness { --tag: var(--danger); }
+.tag-risk { --tag: var(--warn); }
+.tag-assumption { --tag: var(--seat-6); }
+.tag-opportunity { --tag: var(--accent); }
+.tag-recommendation { --tag: var(--seat-5); }
+
+/* No grey slabs behind expanded headers or clicked tabs; hover stays subtle. */
+.q-expansion-item__container > .q-item, .q-tab { background: transparent !important; }
+.q-tab .q-focus-helper, .q-expansion-item__container > .q-item > .q-focus-helper { display: none; }
+.q-expansion-item__container > .q-item:hover { background: color-mix(in srgb, var(--ink) 4%, transparent) !important; }
+.body--dark .tone-info { background: rgba(77, 188, 171, 0.08); }

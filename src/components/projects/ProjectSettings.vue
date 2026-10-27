@@ -5,13 +5,13 @@
         <q-input v-model="name" dense outlined :label="t('projects.settings.name')" />
         <q-input v-model="excludeText" outlined autogrow type="textarea" :label="t('projects.settings.exclude')"
           :hint="t('projects.settings.excludeHint')" />
-        <div class="text-caption text-grey-7">
+        <div class="text-caption text-soft">
           {{ t('projects.settings.alwaysExcluded', { list: defaults.join('  ') }) }}
         </div>
       </q-card-section>
       <q-card-actions class="q-px-md q-pb-md">
         <q-btn unelevated color="primary" :label="t('common.save')" @click="save" />
-        <span class="text-caption text-grey-7 q-ml-md">{{ t('projects.settings.appliesNext') }}</span>
+        <span class="text-caption text-soft q-ml-md">{{ t('projects.settings.appliesNext') }}</span>
       </q-card-actions>
     </q-card>
 

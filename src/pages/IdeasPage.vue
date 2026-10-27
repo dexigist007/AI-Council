@@ -18,7 +18,7 @@
       </q-card-actions>
     </q-card>
 
-    <div v-if="active.length === 0 && !showNew" class="text-grey-7">
+    <div v-if="active.length === 0 && !showNew" class="text-soft">
       {{ t('ideas.list.empty') }}
     </div>
     <q-list v-else bordered separator style="max-width: 900px">

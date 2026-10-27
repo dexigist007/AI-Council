@@ -1,6 +1,6 @@
 <template>
   <q-page padding>
-    <div v-if="!idea" class="text-grey-7">{{ notFound ? t('ideas.detail.notFound') : t('common.loading') }}</div>
+    <div v-if="!idea" class="text-soft">{{ notFound ? t('ideas.detail.notFound') : t('common.loading') }}</div>
     <div v-else class="stack" style="max-width: 1000px">
       <div class="row items-start">
         <div class="col">
@@ -34,7 +34,7 @@
       <template v-if="latest">
         <VerdictPanel v-if="idea.status === 'evaluating' && runHere?.status !== 'running'" :idea="idea" :report="latest.report.judge"
           :session-id="latest.sessionId" @decided="load" />
-        <div class="text-caption text-grey-7">
+        <div class="text-caption text-soft">
           {{ latest.type === 'kill_idea' ? t('ideas.detail.kill') : t('ideas.detail.evaluation') }} · {{ fmtDate(latest.createdAt) }} ·
           <router-link :to="`/council/${latest.sessionId}`">{{ t('ideas.detail.sessionDetail') }}</router-link>
         </div>

@@ -5,7 +5,7 @@
     </q-input>
 
     <q-card v-if="query" flat bordered>
-      <q-card-section class="text-subtitle2">{{ t('projects.files.results', { n: hits.length }) }} <span class="text-caption text-grey-7">{{ t('projects.files.localOnly') }}</span></q-card-section>
+      <q-card-section class="text-subtitle2">{{ t('projects.files.results', { n: hits.length }) }} <span class="text-caption text-soft">{{ t('projects.files.localOnly') }}</span></q-card-section>
       <q-list dense separator>
         <q-item v-for="h in hits" :key="h.chunkId">
           <q-item-section>

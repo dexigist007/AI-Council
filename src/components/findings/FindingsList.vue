@@ -6,16 +6,16 @@
       <q-select v-model="categoryFilter" class="col-6 col-md-3" dense outlined multiple emit-value map-options :options="categoryOptions" :label="t('projects.findings.category')" />
       <q-toggle v-model="verifiedOnly" class="col-auto" :label="t('projects.findings.verifiedOnly')" />
       <q-space />
-      <div class="col-auto text-caption text-grey-7">{{ t('projects.findings.count', { n: shown.length }) }}</div>
+      <div class="col-auto text-caption text-soft">{{ t('projects.findings.count', { n: shown.length }) }}</div>
     </div>
 
-    <div v-if="shown.length === 0" class="text-grey-7">{{ t('projects.findings.empty') }}</div>
+    <div v-if="shown.length === 0" class="text-soft">{{ t('projects.findings.empty') }}</div>
     <q-list v-else bordered separator>
       <q-expansion-item v-for="f in shown" :key="f.id" dense>
         <template #header>
           <q-item-section side><q-badge :color="PRIORITY_COLOR[f.priority]" class="text-weight-bold">{{ f.priority }}</q-badge></q-item-section>
           <q-item-section>
-            <q-item-label :class="f.status !== 'open' ? 'text-grey-6' : ''">{{ f.title }}</q-item-label>
+            <q-item-label :class="f.status !== 'open' ? 'text-soft' : ''">{{ f.title }}</q-item-label>
             <q-item-label caption>
               {{ categoryLabel(f.category) }} · {{ t(`projects.findings.severity.${f.severity}`) }} · {{ t('projects.findings.confidenceLine', { level: t(`projects.findings.confidence.${f.confidence}`) }) }}
               <span v-if="showProject && projectNames[f.projectId]"> · {{ projectNames[f.projectId] }}</span>
@@ -31,16 +31,16 @@
         <q-card flat class="q-px-md q-pb-md">
           <div style="white-space: pre-wrap">{{ f.description }}</div>
           <div v-if="f.evidence.length" class="q-mt-sm">
-            <div class="text-caption text-grey-7">{{ t('projects.findings.evidence') }}</div>
+            <div class="text-caption text-soft">{{ t('projects.findings.evidence') }}</div>
             <div v-for="(e, i) in f.evidence" :key="i" class="q-mt-xs">
               <q-badge :color="e.verified ? 'positive' : 'negative'" outline class="q-mr-sm">{{ e.verified ? t('projects.findings.evidenceVerified') : t('projects.findings.evidenceMissing') }}</q-badge>
               <code>{{ e.file }}:{{ e.start_line }}<span v-if="e.end_line !== e.start_line">-{{ e.end_line }}</span></code>
               <pre v-if="e.quote" class="quote">{{ e.quote }}</pre>
             </div>
           </div>
-          <div v-else class="text-caption text-grey-7 q-mt-sm">{{ t('projects.findings.noEvidence') }}</div>
+          <div v-else class="text-caption text-soft q-mt-sm">{{ t('projects.findings.noEvidence') }}</div>
           <div v-if="f.suggestedFix" class="q-mt-sm"><b>{{ t('projects.findings.suggestedFix') }}</b> {{ f.suggestedFix }}</div>
-          <div class="text-caption text-grey-7 q-mt-sm">
+          <div class="text-caption text-soft q-mt-sm">
             {{ t('projects.findings.scores', { impact: f.impact, risk: f.risk, urgency: f.urgency, effort: f.effort, date: fmtDay(f.lastSeenAt) }) }}
           </div>
           <div class="row q-gutter-sm q-mt-sm">

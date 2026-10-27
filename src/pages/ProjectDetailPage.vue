@@ -1,11 +1,11 @@
 <template>
   <q-page padding>
-    <div v-if="!project" class="text-grey-7">{{ notFound ? t('projects.detail.notFound') : t('common.loading') }}</div>
+    <div v-if="!project" class="text-soft">{{ notFound ? t('projects.detail.notFound') : t('common.loading') }}</div>
     <div v-else style="max-width: 1200px">
       <div class="row items-center q-mb-sm">
         <div>
           <div class="text-h5">{{ project.name }}</div>
-          <div class="text-caption text-grey-7">{{ project.rootPath }}</div>
+          <div class="text-caption text-soft">{{ project.rootPath }}</div>
         </div>
         <q-space />
         <q-btn unelevated color="primary" icon="sync" :label="t('projects.detail.reindex')" :loading="!!progress" @click="reindex" />

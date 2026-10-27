@@ -10,7 +10,7 @@
         <q-card v-for="m in members" :key="m.id" flat bordered>
           <q-card-section class="q-pb-sm">
             <div class="row items-center no-wrap q-gutter-sm">
-              <q-avatar size="28px" :color="colorOf(m.id)" text-color="white" class="text-caption">{{ m.id }}</q-avatar>
+              <span class="seat" :style="{ background: seatColor(m.id) }">{{ m.id }}</span>
               <div class="col">
                 <div class="text-weight-medium">{{ m.roleLabel }}</div>
                 <div class="text-caption text-soft ellipsis">{{ m.provider }} · {{ m.model }}</div>
@@ -21,8 +21,8 @@
             <template v-if="analysisOf(m.id)">
               <div class="q-mb-sm" style="white-space: pre-wrap">{{ analysisOf(m.id)!.summary }}</div>
               <div v-for="(c, i) in analysisOf(m.id)!.claims" :key="i" class="claim">
-                <q-badge v-if="c.id" outline color="grey-6" class="q-mr-xs">{{ c.id }}</q-badge>
-                <q-badge :color="TYPE_COLOR[c.type]" class="q-mr-xs">{{ t(`council.feed.type.${c.type}`) }}</q-badge>
+                <span v-if="c.id" class="tag tag-id">{{ c.id }}</span>
+                <span class="tag" :class="`tag-${c.type}`">{{ t(`council.feed.type.${c.type}`) }}</span>
                 <span class="text-caption text-soft q-mr-xs">{{ t(`common.confidence.${c.confidence}`) }}</span>
                 <span>{{ c.text }}</span>
               </div>
@@ -44,7 +44,7 @@
       <div class="debate-grid">
         <q-card v-for="r in feed.reviews" :key="r.participantId" flat bordered>
           <q-card-section class="q-pb-sm row items-center no-wrap q-gutter-sm">
-            <q-avatar size="28px" :color="colorOf(r.participantId)" text-color="white" class="text-caption">{{ r.participantId }}</q-avatar>
+            <span class="seat" :style="{ background: seatColor(r.participantId) }">{{ r.participantId }}</span>
             <div class="text-weight-medium">{{ r.roleLabel }}</div>
           </q-card-section>
           <q-card-section class="q-pt-none">
@@ -53,7 +53,7 @@
               <div class="row items-center no-wrap q-gutter-xs">
                 <q-icon :name="STANCE[rv.stance].icon" :color="STANCE[rv.stance].color" />
                 <span class="text-weight-medium">{{ t(`council.feed.stance.${rv.stance}`) }}</span>
-                <q-badge outline color="grey-6">{{ rv.claimId }}</q-badge>
+                <span class="tag tag-id">{{ rv.claimId }}</span>
                 <span class="text-caption text-soft ellipsis">{{ claimAuthor(rv.claimId) }}</span>
               </div>
               <div class="quote text-caption">{{ claimText(rv.claimId) }}</div>
@@ -62,14 +62,14 @@
             <div v-if="r.missing.length" class="q-mt-sm">
               <div class="text-caption text-weight-medium">{{ t('council.feed.missingPoints') }}</div>
               <div v-for="(mp, i) in r.missing" :key="i" class="claim">
-                <q-badge :color="TYPE_COLOR[mp.type]" class="q-mr-xs">{{ t(`council.feed.type.${mp.type}`) }}</q-badge>{{ mp.text }}
+                <span class="tag" :class="`tag-${mp.type}`">{{ t(`council.feed.type.${mp.type}`) }}</span>{{ mp.text }}
               </div>
             </div>
           </q-card-section>
         </q-card>
         <q-card v-for="pid in liveIn('critique')" :key="`live-${pid}`" flat bordered>
           <q-card-section class="q-pb-sm row items-center no-wrap q-gutter-sm">
-            <q-avatar size="28px" :color="colorOf(pid)" text-color="white" class="text-caption">{{ pid }}</q-avatar>
+            <span class="seat" :style="{ background: seatColor(pid) }">{{ pid }}</span>
             <div class="text-weight-medium">{{ memberOf(pid)?.roleLabel }}</div>
           </q-card-section>
           <q-card-section class="q-pt-none"><LiveText :text="feed.live[pid]!.text" /></q-card-section>
@@ -108,17 +108,8 @@ const liveIn = (round: string) => Object.keys(props.feed.live).filter((id) => id
 const claimText = (id: string) => props.feed.claims.find((c) => c.id === id)?.text ?? ''
 const claimAuthor = (id: string) => props.feed.claims.find((c) => c.id === id)?.roleLabel ?? ''
 
-const PALETTE = ['indigo', 'teal', 'deep-orange', 'purple', 'blue-grey', 'pink']
-const colorOf = (id: string) => (id === 'judge' ? 'amber-9' : PALETTE[(Number(id.replace(/\D/g, '')) - 1) % PALETTE.length] ?? 'grey')
-
-const TYPE_COLOR = {
-  strength: 'positive',
-  weakness: 'negative',
-  risk: 'deep-orange',
-  assumption: 'blue-grey',
-  opportunity: 'primary',
-  recommendation: 'teal',
-} as const
+/** Each member keeps one seat colour everywhere in the debate (see --seat-* in theme.css). */
+const seatColor = (id: string) => (id === 'judge' ? 'var(--seat-judge)' : `var(--seat-${((Number(id.replace(/\D/g, '')) - 1) % 6) + 1})`)
 const STANCE = {
   agree: { icon: 'thumb_up', color: 'positive' },
   disagree: { icon: 'thumb_down', color: 'negative' },

@@ -3,7 +3,7 @@
     <q-card flat bordered>
       <q-card-section class="row items-center q-gutter-sm">
         <q-chip square size="lg" :color="decision.color" text-color="white" class="text-weight-bold">{{ decision.label }}</q-chip>
-        <div class="text-grey-7">{{ decision.hint }}</div>
+        <div class="text-soft">{{ decision.hint }}</div>
         <q-space />
         <q-chip v-if="report.survives_kill_test !== null" :color="report.survives_kill_test ? 'positive' : 'negative'" text-color="white"
           :icon="report.survives_kill_test ? 'shield' : 'local_fire_department'">
@@ -35,7 +35,7 @@
           <q-card-section class="text-subtitle2"><q-icon :name="s.icon" :color="s.color" class="q-mr-xs" />{{ s.title }}</q-card-section>
           <q-card-section class="q-pt-none">
             <ul v-if="s.items.length" class="q-ma-none q-pl-md"><li v-for="(it, i) in s.items" :key="i" class="q-mb-xs">{{ it }}</li></ul>
-            <div v-else class="text-grey-6">{{ t('common.none') }}</div>
+            <div v-else class="text-soft">{{ t('common.none') }}</div>
           </q-card-section>
         </q-card>
       </div>

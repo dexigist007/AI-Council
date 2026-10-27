@@ -1,7 +1,7 @@
 <template>
   <q-page padding>
     <div class="text-h5 q-mb-xs">{{ t('projects.findings.pageTitle') }}</div>
-    <div class="text-grey-7 q-mb-md">{{ t('projects.findings.pageIntro') }}</div>
+    <div class="text-soft q-mb-md">{{ t('projects.findings.pageIntro') }}</div>
     <div style="max-width: 1200px"><FindingsList /></div>
   </q-page>
 </template>

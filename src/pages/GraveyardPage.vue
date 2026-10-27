@@ -1,15 +1,15 @@
 <template>
   <q-page padding>
     <div class="text-h5 q-mb-xs">{{ t('ideas.graveyard.title') }}</div>
-    <div class="text-grey-7 q-mb-lg">{{ t('ideas.graveyard.subtitle') }}</div>
-    <div v-if="ideas.length === 0" class="text-grey-7">{{ t('ideas.graveyard.empty') }}</div>
+    <div class="text-soft q-mb-lg">{{ t('ideas.graveyard.subtitle') }}</div>
+    <div v-if="ideas.length === 0" class="text-soft">{{ t('ideas.graveyard.empty') }}</div>
     <div class="stack" style="max-width: 900px">
       <q-card v-for="i in ideas" :key="i.id" flat bordered>
         <q-card-section class="row items-center">
           <router-link :to="`/ideas/${i.id}`" class="text-subtitle1">{{ i.title }}</router-link>
           <q-badge class="q-ml-sm" :color="i.status === 'hold' ? 'warning' : 'negative'">{{ statusLabel(i.status) }}</q-badge>
           <q-space />
-          <span class="text-caption text-grey-7">{{ fmtDay(i.updatedAt) }}</span>
+          <span class="text-caption text-soft">{{ fmtDay(i.updatedAt) }}</span>
         </q-card-section>
         <q-card-section class="q-pt-none">
           <div><b>{{ t('ideas.graveyard.why') }}</b> {{ i.rejectReason ?? t('common.none') }}</div>

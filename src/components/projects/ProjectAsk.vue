@@ -33,7 +33,7 @@
         <q-select v-model="slotKey" class="col-5" dense outlined :options="slots.map((s) => ({ label: s.label, value: s.key }))" emit-value map-options :label="t('projects.ask.model')" />
         <div class="col text-caption">
           {{ t('projects.ask.tokens', { tokens: (context.tokens / 1000).toFixed(1) }) }} · {{ costLabel }} · {{ t('projects.ask.factsToo') }}
-          <span :class="context.redactions ? 'text-warn' : 'text-grey-7'">{{ context.redactions ? t('projects.ask.redacted', { n: context.redactions }) : t('projects.ask.nothingRedacted') }}</span>
+          <span :class="context.redactions ? 'text-warn' : 'text-soft'">{{ context.redactions ? t('projects.ask.redacted', { n: context.redactions }) : t('projects.ask.nothingRedacted') }}</span>
         </div>
         <div class="col-auto">
           <q-btn v-if="!asking" unelevated color="primary" icon="send" :label="t('projects.ask.send')" :disable="!question.trim() || !slotKey || selected.size === 0" @click="ask" />
@@ -41,7 +41,7 @@
         </div>
       </q-card-section>
     </q-card>
-    <div v-else-if="searched" class="text-grey-7">{{ t('projects.ask.noMatch') }}</div>
+    <div v-else-if="searched" class="text-soft">{{ t('projects.ask.noMatch') }}</div>
     <div v-if="error" class="text-negative">{{ error }}</div>
 
     <AskAnswerView v-if="current" :report="current" />

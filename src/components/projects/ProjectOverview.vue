@@ -1,11 +1,11 @@
 <template>
   <div class="stack">
-    <div v-if="!project.indexStats" class="text-grey-7">{{ t('projects.shared.notIndexed') }}</div>
+    <div v-if="!project.indexStats" class="text-soft">{{ t('projects.shared.notIndexed') }}</div>
     <template v-else>
       <div class="row q-col-gutter-md">
         <div v-for="s in summary" :key="s.label" class="col-6 col-md-3">
           <q-card flat bordered><q-card-section>
-            <div class="text-caption text-grey-7">{{ s.label }}</div>
+            <div class="text-caption text-soft">{{ s.label }}</div>
             <div class="text-h6">{{ s.value }}</div>
           </q-card-section></q-card>
         </div>
@@ -17,12 +17,12 @@
       <q-card flat bordered>
         <q-card-section class="text-subtitle2">
           {{ t('projects.overview.stack') }} <q-badge outline color="primary" class="q-ml-sm">OBSERVED</q-badge>
-          <div class="text-caption text-grey-7">{{ t('projects.overview.stackHint') }}</div>
+          <div class="text-caption text-soft">{{ t('projects.overview.stackHint') }}</div>
         </q-card-section>
         <q-card-section class="q-pt-none">
-          <div v-if="facts.length === 0" class="text-grey-7">{{ t('projects.overview.noManifest') }}</div>
+          <div v-if="facts.length === 0" class="text-soft">{{ t('projects.overview.noManifest') }}</div>
           <div v-for="(items, cat) in grouped" :key="cat" class="q-mb-sm">
-            <span class="text-caption text-grey-7 q-mr-sm">{{ stackCategory(cat) }}</span>
+            <span class="text-caption text-soft q-mr-sm">{{ stackCategory(cat) }}</span>
             <q-chip v-for="f in items" :key="f.id" dense>
               {{ f.statement.split(': ')[1] }}
               <q-tooltip>{{ f.evidence.map((e) => e.file).join(', ') }}</q-tooltip>
@@ -51,7 +51,7 @@
                 <q-item-section>{{ skipLabel(String(reason)) }}</q-item-section>
                 <q-item-section side>{{ fmtNum(n) }}</q-item-section>
               </q-item>
-              <q-item v-if="Object.keys(project.indexStats.skipped).length === 0"><q-item-section class="text-grey-7">{{ t('projects.overview.none') }}</q-item-section></q-item>
+              <q-item v-if="Object.keys(project.indexStats.skipped).length === 0"><q-item-section class="text-soft">{{ t('projects.overview.none') }}</q-item-section></q-item>
             </q-list>
           </q-card>
         </div>

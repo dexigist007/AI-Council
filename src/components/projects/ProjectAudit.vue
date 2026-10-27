@@ -4,7 +4,7 @@
       <q-card-section class="row items-center">
         <div class="col">
           <div class="text-subtitle2">{{ t('projects.audit.localTitle') }}</div>
-          <div class="text-caption text-grey-7">{{ t('projects.audit.localHint') }}</div>
+          <div class="text-caption text-soft">{{ t('projects.audit.localHint') }}</div>
         </div>
         <q-btn outline color="primary" icon="manage_search" :label="t('projects.audit.localRun')" :loading="scanning" :disable="!project.indexedAt" @click="localScan" />
       </q-card-section>
@@ -15,7 +15,7 @@
       <q-card-section class="text-subtitle2">{{ t('projects.audit.councilTitle') }}</q-card-section>
       <q-card-section class="q-pt-none stack">
         <div>
-          <div class="text-caption text-grey-7 q-mb-xs">{{ t('projects.audit.focusHint') }}</div>
+          <div class="text-caption text-soft q-mb-xs">{{ t('projects.audit.focusHint') }}</div>
           <q-option-group v-model="focus" :options="AUDIT_FOCUS.map((f) => ({ label: focusLabel(f.id), value: f.id }))" type="checkbox" inline @update:model-value="prepare" />
         </div>
         <CouncilMembers v-model="config" :roles="roles" />
@@ -32,7 +32,7 @@
       </q-card-section>
       <q-card-actions class="q-px-md q-pb-md">
         <q-btn unelevated color="primary" icon="fact_check" :label="t('projects.audit.start')" :disable="!!disabledReason" @click="start" />
-        <span v-if="disabledReason" class="text-caption text-grey-7 q-ml-md">{{ disabledReason }}</span>
+        <span v-if="disabledReason" class="text-caption text-soft q-ml-md">{{ disabledReason }}</span>
       </q-card-actions>
     </q-card>
 

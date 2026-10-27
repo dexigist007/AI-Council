@@ -5,9 +5,9 @@
       <q-space />
       <q-btn unelevated color="primary" icon="create_new_folder" :label="t('projects.list.add')" :loading="adding" @click="add" />
     </div>
-    <div class="text-grey-7 q-mb-md">{{ t('projects.list.privacy') }}</div>
+    <div class="text-soft q-mb-md">{{ t('projects.list.privacy') }}</div>
     <q-banner v-if="error" class="bg-negative text-white q-mb-md" rounded>{{ error }}</q-banner>
-    <div v-if="projects.length === 0" class="text-grey-7">{{ t('projects.list.empty') }}</div>
+    <div v-if="projects.length === 0" class="text-soft">{{ t('projects.list.empty') }}</div>
     <q-list v-else bordered separator style="max-width: 1000px">
       <q-item v-for="p in projects" :key="p.id" clickable :to="`/projects/${p.id}`">
         <q-item-section avatar><q-icon name="folder" color="primary" /></q-item-section>

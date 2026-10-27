@@ -1,7 +1,7 @@
 <template>
   <q-page padding>
     <div class="text-h5 q-mb-sm">{{ title }}</div>
-    <div class="text-grey-7">{{ description }}</div>
+    <div class="text-soft">{{ description }}</div>
     <q-banner v-if="phase" rounded class="q-mt-lg tone-muted">
       {{ t('shell.placeholder.comingIn', { phase }) }}
     </q-banner>

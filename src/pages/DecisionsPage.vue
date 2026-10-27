@@ -1,8 +1,8 @@
 <template>
   <q-page padding>
     <div class="text-h5 q-mb-xs">{{ t('ideas.decisions.title') }}</div>
-    <div class="text-grey-7 q-mb-lg">{{ t('ideas.decisions.subtitle') }}</div>
-    <div v-if="rows.length === 0" class="text-grey-7">{{ t('ideas.decisions.empty') }}</div>
+    <div class="text-soft q-mb-lg">{{ t('ideas.decisions.subtitle') }}</div>
+    <div v-if="rows.length === 0" class="text-soft">{{ t('ideas.decisions.empty') }}</div>
     <q-list v-else bordered separator style="max-width: 900px">
       <q-item v-for="d in rows" :key="d.id">
         <q-item-section>

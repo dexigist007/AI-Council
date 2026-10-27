@@ -1,19 +1,19 @@
 <template>
   <q-card flat bordered>
     <q-card-section>
-      <div class="text-caption text-grey-7">{{ t('projects.answer.question') }}</div>
+      <div class="text-caption text-soft">{{ t('projects.answer.question') }}</div>
       <div class="text-subtitle1">{{ report.question }}</div>
     </q-card-section>
     <q-card-section class="q-pt-none">
       <div class="row items-center q-mb-xs">
-        <div class="text-caption text-grey-7">{{ t('projects.answer.answer') }}</div>
+        <div class="text-caption text-soft">{{ t('projects.answer.answer') }}</div>
         <q-badge class="q-ml-sm" :color="CONF[report.confidence].color">{{ t('projects.answer.confidence', { level: t(`projects.answer.conf.${report.confidence}`) }) }}</q-badge>
       </div>
       <!-- Plain text on purpose: model output is never rendered as HTML. -->
       <div class="answer">{{ report.answer }}</div>
     </q-card-section>
     <q-card-section v-if="report.citations.length" class="q-pt-none">
-      <div class="text-caption text-grey-7 q-mb-xs">{{ t('projects.answer.sources') }}</div>
+      <div class="text-caption text-soft q-mb-xs">{{ t('projects.answer.sources') }}</div>
       <q-list dense bordered separator>
         <q-item v-for="(c, i) in report.citations" :key="i">
           <q-item-section side top>
@@ -28,11 +28,11 @@
       </q-list>
     </q-card-section>
     <q-card-section v-if="report.missingContext.length" class="q-pt-none">
-      <div class="text-caption text-grey-7">{{ t('projects.answer.missing') }}</div>
+      <div class="text-caption text-soft">{{ t('projects.answer.missing') }}</div>
       <ul class="q-my-xs q-pl-md"><li v-for="(m, i) in report.missingContext" :key="i">{{ m }}</li></ul>
-      <div class="text-caption text-grey-7">{{ t('projects.answer.missingHint') }}</div>
+      <div class="text-caption text-soft">{{ t('projects.answer.missingHint') }}</div>
     </q-card-section>
-    <q-card-section class="q-pt-none text-caption text-grey-7">{{ t('projects.answer.sentFiles', { files: report.sentFiles.join(', ') }) }}</q-card-section>
+    <q-card-section class="q-pt-none text-caption text-soft">{{ t('projects.answer.sentFiles', { files: report.sentFiles.join(', ') }) }}</q-card-section>
   </q-card>
 </template>
 

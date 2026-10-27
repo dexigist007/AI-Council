@@ -3,10 +3,10 @@
     <q-card style="width: 640px; max-width: 95vw">
       <q-card-section>
         <div class="text-h6">{{ t('projects.brainDraft.title') }}</div>
-        <div class="text-caption text-grey-7">{{ t('projects.brainDraft.intro') }}</div>
+        <div class="text-caption text-soft">{{ t('projects.brainDraft.intro') }}</div>
       </q-card-section>
 
-      <q-card-section v-if="loading" class="text-grey-7">{{ t('projects.brainDraft.preparing') }}</q-card-section>
+      <q-card-section v-if="loading" class="text-soft">{{ t('projects.brainDraft.preparing') }}</q-card-section>
       <template v-else>
         <q-card-section class="q-pt-none">
           <q-banner v-if="slots.length === 0" rounded class="tone-warn">
@@ -25,7 +25,7 @@
           <div class="text-caption">
             {{ t('projects.brainDraft.tokens', { tokens: (context.tokens / 1000).toFixed(1) }) }} <b>{{ costLabel }}</b>
           </div>
-          <div class="text-caption" :class="context.redactions ? 'text-warn' : 'text-grey-7'">
+          <div class="text-caption" :class="context.redactions ? 'text-warn' : 'text-soft'">
             {{ context.redactions ? t('projects.brainDraft.redacted', { n: context.redactions }) : t('projects.brainDraft.nothingRedacted') }}
             {{ t('projects.brainDraft.envNever') }}
           </div>

@@ -8,7 +8,7 @@
       <q-card flat bordered>
         <q-card-section class="row items-center q-gutter-md">
           <div><q-icon name="call_split" /> <b>{{ status.branch ?? t('projects.git.detached') }}</b>
-            <span v-if="status.upstream" class="text-caption text-grey-7"> → {{ status.upstream }}
+            <span v-if="status.upstream" class="text-caption text-soft"> → {{ status.upstream }}
               <span v-if="status.ahead">{{ t('projects.git.ahead', { n: status.ahead }) }}</span><span v-if="status.behind">{{ t('projects.git.behind', { n: status.behind }) }}</span></span>
           </div>
           <div v-if="commits[0]" class="text-caption text-soft">{{ t('projects.git.lastCommit') }} <code>{{ commits[0].hash.slice(0, 8) }}</code> {{ commits[0].subject }}</div>
@@ -16,12 +16,12 @@
           <q-btn flat dense icon="refresh" @click="load" />
         </q-card-section>
         <q-card-section class="q-pt-none">
-          <div class="text-caption text-grey-7">{{ t('projects.git.uncommitted', { n: status.files.length }) }}</div>
-          <div v-if="status.files.length === 0" class="text-grey-7">{{ t('projects.git.clean') }}</div>
+          <div class="text-caption text-soft">{{ t('projects.git.uncommitted', { n: status.files.length }) }}</div>
+          <div v-if="status.files.length === 0" class="text-soft">{{ t('projects.git.clean') }}</div>
           <div v-for="f in status.files" :key="f.path" class="mono text-caption">
             <span class="code">{{ f.index }}{{ f.worktree }}</span> {{ f.path }}
           </div>
-          <div v-if="status.files.some((f) => f.index === '?')" class="text-caption text-grey-7 q-mt-xs">
+          <div v-if="status.files.some((f) => f.index === '?')" class="text-caption text-soft q-mt-xs">
             {{ t('projects.git.untrackedPre') }} <code>git add</code> {{ t('projects.git.untrackedPost') }}
           </div>
         </q-card-section>
@@ -30,7 +30,7 @@
       <q-card flat bordered>
         <q-card-section class="row items-center q-col-gutter-sm">
           <q-select v-model="target" class="col-8" dense outlined emit-value map-options :options="targetOptions" :label="t('projects.git.target')" @update:model-value="loadDiff" />
-          <div class="col text-caption text-grey-7">{{ diffSummary }}</div>
+          <div class="col text-caption text-soft">{{ diffSummary }}</div>
         </q-card-section>
         <q-list v-if="diffFiles.length" dense separator>
           <q-expansion-item v-for="f in diffFiles" :key="f.path" dense>
@@ -40,29 +40,29 @@
                 <span><q-badge outline>{{ f.status }}</q-badge> <span class="text-positive">+{{ f.additions }}</span> <span class="text-negative">-{{ f.deletions }}</span></span>
               </q-item-section>
             </template>
-            <div v-if="f.binary" class="q-pa-sm text-grey-7">{{ t('projects.git.binary') }}</div>
+            <div v-if="f.binary" class="q-pa-sm text-soft">{{ t('projects.git.binary') }}</div>
             <pre v-else class="diff"><template v-for="(h, hi) in f.hunks" :key="hi"><span class="hunk">@@ {{ h.newStart }} @@
 </span><span v-for="(l, li) in h.lines" :key="li" :class="l.type === '+' ? 'add' : l.type === '-' ? 'del' : ''">{{ l.type }}{{ l.newLine === null ? '     ' : String(l.newLine).padStart(5) }} {{ l.text }}
 </span></template></pre>
           </q-expansion-item>
         </q-list>
-        <q-card-section v-else-if="target" class="text-grey-7">{{ t('projects.git.noChanges') }}</q-card-section>
+        <q-card-section v-else-if="target" class="text-soft">{{ t('projects.git.noChanges') }}</q-card-section>
       </q-card>
 
       <q-card v-show="runHere?.status !== 'running'" flat bordered>
         <q-card-section class="text-subtitle2">{{ t('projects.git.reviewTitle') }}</q-card-section>
         <q-card-section class="q-pt-none stack">
-          <div class="text-caption text-grey-7">{{ t('projects.git.reviewHint') }}</div>
+          <div class="text-caption text-soft">{{ t('projects.git.reviewHint') }}</div>
           <CouncilMembers v-model="config" :roles="REVIEW_ROLES" />
           <div v-if="review" class="text-caption">
             {{ t('projects.git.toSend', { n: review.files.length }) }} · {{ t('projects.shared.perMember', { tokens: (review.tokens / 1000).toFixed(1) }) }} · {{ t('projects.shared.estimatedTotal') }} <b>{{ estimateLabel }}</b> ·
             <span :class="review.redactions ? 'text-warn' : ''">{{ t('projects.shared.redactions', { n: review.redactions }) }}</span>
-            <div v-if="review.skipped.length" class="text-grey-7">{{ t('projects.git.excluded', { list: review.skipped.map((s) => `${s.path} (${skipLabel(s.reason)})`).join(', ') }) }}</div>
+            <div v-if="review.skipped.length" class="text-soft">{{ t('projects.git.excluded', { list: review.skipped.map((s) => `${s.path} (${skipLabel(s.reason)})`).join(', ') }) }}</div>
           </div>
         </q-card-section>
         <q-card-actions class="q-px-md q-pb-md">
           <q-btn unelevated color="primary" icon="rate_review" :label="t('projects.git.review')" :disable="!!disabledReason" @click="startReview" />
-          <span v-if="disabledReason" class="text-caption text-grey-7 q-ml-md">{{ disabledReason }}</span>
+          <span v-if="disabledReason" class="text-caption text-soft q-ml-md">{{ disabledReason }}</span>
         </q-card-actions>
       </q-card>
 

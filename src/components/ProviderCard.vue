@@ -2,12 +2,12 @@
   <q-card flat bordered>
     <q-card-section class="row items-center q-gutter-sm">
       <div class="text-subtitle1">{{ meta.label }}<span v-if="meta.keyless" class="text-soft"> ({{ t('shell.provider.local') }})</span></div>
-      <q-badge v-if="meta.note" color="orange-8" :label="t(`shell.provider.note.${meta.note}`)" />
+      <span v-if="meta.note" class="tag tag-risk">{{ t(`shell.provider.note.${meta.note}`) }}</span>
       <q-space />
-      <q-chip v-if="meta.keyless" dense color="positive" text-color="white" icon="computer">{{ t('shell.provider.noKeyNeeded') }}</q-chip>
-      <q-chip v-else dense :color="hasKey ? 'positive' : 'grey-5'" text-color="white" :icon="hasKey ? 'key' : 'key_off'">
+      <span v-if="meta.keyless" class="tag tag-strength"><q-icon name="computer" size="15px" class="q-mr-xs" />{{ t('shell.provider.noKeyNeeded') }}</span>
+      <span v-else class="tag" :class="hasKey ? 'tag-strength' : 'tag-assumption'"><q-icon :name="hasKey ? 'key' : 'key_off'" size="15px" class="q-mr-xs" />
         {{ hasKey ? t('shell.provider.keySaved') : t('shell.provider.noKey') }}
-      </q-chip>
+      </span>
       <q-toggle v-model="config.enabled" :label="t('shell.provider.enabled')" :disable="!hasKey" @update:model-value="save" />
     </q-card-section>
     <q-card-section v-if="missing" class="q-py-none">
